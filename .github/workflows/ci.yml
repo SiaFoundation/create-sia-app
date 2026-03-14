@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: cd template && bun install
+
+      - name: Build
+        run: cd template && bun run build
+
+      - name: Lint
+        run: cd template && bun run check
+
+      - name: Install Playwright browsers
+        run: cd template && bunx playwright install chromium
+
+      - name: Smoke test
+        run: cd template && bunx playwright test e2e/smoke.spec.ts
+
+  scaffold-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install workspace deps
+        run: bun install
+      - name: Scaffold smoke test
+        run: bun run test:scaffold

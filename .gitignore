@@ -1,0 +1,9 @@
+node_modules
+dist
+!packages/create-sia-app/dist/
+*.local
+.DS_Store
+test-results
+packages/create-sia-app/template/
+.env
+.npmrc

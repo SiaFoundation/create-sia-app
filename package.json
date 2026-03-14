@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "workspaces": ["template", "packages/*"],
+  "scripts": {
+    "publish": "bun scripts/publish.ts",
+    "test:scaffold": "bun scripts/test-scaffold.ts"
+  }
+}

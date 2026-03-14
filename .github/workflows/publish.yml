@@ -1,0 +1,31 @@
+name: Publish to npm
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.head_ref == 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: knope-dev/action@v2.1.2
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: bun install
+      - run: bun run build
+        working-directory: packages/create-sia-app
+      - run: npm publish --access public
+        working-directory: packages/create-sia-app
+      - run: knope release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
