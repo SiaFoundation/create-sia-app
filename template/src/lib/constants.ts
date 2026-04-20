@@ -1,6 +1,6 @@
 import type { AppMetadata } from 'sia-storage'
 
-// biome-ignore format: scaffolder substitutes a 64-char hex string here
+// biome-ignore format: long hex literal
 export const APP_KEY = '{{APP_KEY}}'
 export const APP_NAME = '{{APP_NAME}}'
 export const DEFAULT_INDEXER_URL = '{{INDEXER_URL}}'

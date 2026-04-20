@@ -1,6 +1,7 @@
 import type { Sdk } from 'sia-storage'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { APP_KEY } from '../lib/constants'
 
 export type AuthStep =
   | 'loading'
@@ -50,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
-      name: '{{APP_NAME}}-auth',
+      name: `sia-auth-${APP_KEY.slice(0, 16)}`,
       partialize: (state) => ({
         storedKeyHex: state.storedKeyHex,
         indexerUrl: state.indexerUrl,
