@@ -43,5 +43,5 @@ name = "document-change"
 type = "CreateChangeFile"
 
 [github]
-owner = "alexfreska"
+owner = "SiaFoundation"
 repo = "create-sia-app"
