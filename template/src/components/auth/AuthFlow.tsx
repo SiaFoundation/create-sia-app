@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { AppKey, Builder, initSia } from 'sia-storage'
+import { AppKey, Builder, initSia } from '@siafoundation/sia-storage'
 import { APP_META } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { ApproveScreen } from './ApproveScreen'

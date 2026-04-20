@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Builder } from 'sia-storage'
+import { Builder } from '@siafoundation/sia-storage'
 import { APP_META, DEFAULT_INDEXER_URL } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'

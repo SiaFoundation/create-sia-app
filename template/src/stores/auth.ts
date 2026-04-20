@@ -1,4 +1,4 @@
-import type { Sdk } from 'sia-storage'
+import type { Sdk } from '@siafoundation/sia-storage'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { APP_KEY } from '../lib/constants'

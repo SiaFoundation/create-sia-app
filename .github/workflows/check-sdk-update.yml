@@ -23,13 +23,13 @@ jobs:
       - name: Get latest SDK version from npm
         id: latest
         run: |
-          LATEST=$(npm view sia-storage version)
+          LATEST=$(npm view @siafoundation/sia-storage version)
           echo "version=$LATEST" >> "$GITHUB_OUTPUT"
 
       - name: Get current SDK version from template
         id: current
         run: |
-          CURRENT=$(node -p "require('./template/package.json').dependencies['sia-storage'].replace('^', '')")
+          CURRENT=$(node -p "require('./template/package.json').dependencies['@siafoundation/sia-storage'].replace('^', '')")
           echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
 
       - name: Compare versions
@@ -50,7 +50,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('./template/package.json', 'utf8'));
-            pkg.dependencies['sia-storage'] = '^' + '$LATEST';
+            pkg.dependencies['@siafoundation/sia-storage'] = '^' + '$LATEST';
             fs.writeFileSync('./template/package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
@@ -68,7 +68,7 @@ jobs:
           default: patch
           ---
 
-          Bump sia-storage to ${LATEST}
+          Bump @siafoundation/sia-storage to ${LATEST}
           EOF
 
       - name: Commit and push
@@ -78,5 +78,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add template/package.json template/bun.lock .changeset/sdk-bump.md
-          git commit -m "chore: bump sia-storage to ${LATEST}"
+          git commit -m "chore: bump @siafoundation/sia-storage to ${LATEST}"
           git push

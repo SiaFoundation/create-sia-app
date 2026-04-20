@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   // sia-storage loads its WASM via `new URL(..., import.meta.url)`; excluding
   // it from the deps pre-bundler keeps that URL pointing at the real file.
-  optimizeDeps: { exclude: ['sia-storage'] },
+  optimizeDeps: { exclude: ['@siafoundation/sia-storage'] },
 })

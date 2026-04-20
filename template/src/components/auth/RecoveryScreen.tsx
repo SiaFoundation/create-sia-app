@@ -3,7 +3,7 @@ import {
   type Builder,
   generateRecoveryPhrase,
   validateRecoveryPhrase,
-} from 'sia-storage'
+} from '@siafoundation/sia-storage'
 import { useAuthStore } from '../../stores/auth'
 import { CopyButton } from '../CopyButton'
 import { DevNote } from '../DevNote'

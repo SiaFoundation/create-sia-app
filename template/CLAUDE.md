@@ -2,9 +2,9 @@
 
 ## Overview
 
-A starter template for building decentralized storage apps on the Sia network. Uses [`sia-storage`](https://www.npmjs.com/package/sia-storage) — a TypeScript SDK that ships a pre-compiled WASM binary for encryption, uploads, downloads, and key management. WASM runs on the main thread (Rust async — no workers required).
+A starter template for building decentralized storage apps on the Sia network. Uses [`@siafoundation/sia-storage`](https://www.npmjs.com/package/@siafoundation/sia-storage) — a TypeScript SDK that ships a pre-compiled WASM binary for encryption, uploads, downloads, and key management. WASM runs on the main thread (Rust async — no workers required).
 
-**Tech stack:** React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, `sia-storage`
+**Tech stack:** React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, `@siafoundation/sia-storage`
 
 ## Architecture
 
@@ -28,7 +28,7 @@ Returning users skip `requestConnection`/`waitForApproval`/`register` entirely. 
 
 ### SDK
 
-`sia-storage` handles:
+`@siafoundation/sia-storage` handles:
 - Encrypted file uploads/downloads (erasure coding + encryption)
 - Key derivation from recovery phrases (BIP-39)
 - Object pinning and metadata management
@@ -62,7 +62,7 @@ Auth state persists to localStorage via Zustand's `persist` middleware. The stor
 ### Upload a file
 
 ```ts
-import { PinnedObject } from 'sia-storage'
+import { PinnedObject } from '@siafoundation/sia-storage'
 
 const object = new PinnedObject()
 const pinnedObject = await sdk.upload(object, file.stream(), {

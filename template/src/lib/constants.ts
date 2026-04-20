@@ -1,4 +1,4 @@
-import type { AppMetadata } from 'sia-storage'
+import type { AppMetadata } from '@siafoundation/sia-storage'
 
 // biome-ignore format: long hex literal
 export const APP_KEY = '{{APP_KEY}}'
