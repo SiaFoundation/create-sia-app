@@ -12,12 +12,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.RELEASE_PAT }}
       - run: |
           git config --global user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       - uses: knope-dev/action@v2.1.2
       - run: knope prepare-release --verbose
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         continue-on-error: true

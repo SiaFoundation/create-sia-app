@@ -28,4 +28,4 @@ jobs:
         working-directory: packages/create-sia-app
       - run: knope release
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
