@@ -23,16 +23,16 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b border-neutral-800/60">
+    <header className="border-b border-neutral-200/80">
       <div className="flex items-center justify-between px-6 py-3 max-w-5xl mx-auto">
-        <h1 className="text-sm font-semibold text-white tracking-tight">
+        <h1 className="text-sm font-semibold text-neutral-900 tracking-tight">
           {APP_NAME}
         </h1>
         {isConnected && publicKey && (
           <div className="flex items-center gap-3">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600" />
             </span>
             <span
               className="text-[11px] font-mono text-neutral-500"
@@ -44,7 +44,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors ml-1"
+              className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors ml-1"
             >
               Sign Out
             </button>

@@ -63,10 +63,10 @@ export function ApproveScreen({
     <div className="flex flex-col items-center justify-center flex-1 px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-neutral-900">
             Approve Connection
           </h1>
-          <p className="text-neutral-400 text-sm">
+          <p className="text-neutral-600 text-sm">
             Open the link below to approve this app, then return here.
           </p>
         </div>
@@ -76,15 +76,15 @@ export function ApproveScreen({
             The user must visit the approval URL in another tab (or on the
             indexer&apos;s dashboard) to authorize your app. This is an
             out-of-band step — your app polls for approval via{' '}
-            <code className="text-amber-300">builder.waitForApproval()</code>.
+            <code className="text-amber-700">builder.waitForApproval()</code>.
             Once approved, the flow continues to recovery phrase setup.
           </p>
         </DevNote>
 
         {approvalUrl && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-neutral-900 border border-neutral-700 rounded-lg">
-              <span className="flex-1 text-sm font-mono text-neutral-400 truncate">
+            <div className="flex items-center gap-2 p-3 bg-white border border-neutral-300 rounded-lg">
+              <span className="flex-1 text-sm font-mono text-neutral-600 truncate">
                 {approvalUrl}
               </span>
               <CopyButton value={approvalUrl} label="URL copied" />
@@ -104,11 +104,11 @@ export function ApproveScreen({
           type="button"
           onClick={handleManualCheck}
           disabled={manualChecking}
-          className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 disabled:bg-neutral-700 disabled:text-neutral-500 text-white font-medium rounded-lg transition-colors"
+          className="w-full py-3 bg-neutral-100 hover:bg-neutral-200 disabled:bg-neutral-200 disabled:text-neutral-400 text-neutral-900 font-medium rounded-lg transition-colors"
         >
           {manualChecking ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-neutral-400 border-t-white rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
               Checking...
             </span>
           ) : (
@@ -116,12 +116,12 @@ export function ApproveScreen({
           )}
         </button>
 
-        <div className="flex items-center justify-center gap-2 text-xs text-neutral-600">
+        <div className="flex items-center justify-center gap-2 text-xs text-neutral-500">
           {polling ? (
             <>
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-600" />
               </span>
               Polling for approval...
             </>

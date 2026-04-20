@@ -233,34 +233,34 @@ export function UploadZone() {
         <DevNote title="Replace Your App Key">
           <p>
             You&apos;re using the template placeholder. Set your own key in{' '}
-            <code className="text-amber-300">src/lib/constants.ts</code> or
+            <code className="text-amber-700">src/lib/constants.ts</code> or
             scaffold a fresh project with{' '}
-            <code className="text-amber-300">bunx create-sia-app</code>.
+            <code className="text-amber-700">bunx create-sia-app</code>.
           </p>
         </DevNote>
       )}
 
       <DevNote title="Upload & Download">
         <p>
-          <code className="text-amber-300">
+          <code className="text-amber-700">
             sdk.upload(object, file.stream(), opts)
           </code>{' '}
           encrypts, erasure-codes, and streams shards directly to Sia hosts.{' '}
-          <code className="text-amber-300">sdk.download(object, opts)</code>{' '}
-          returns a <code className="text-amber-300">ReadableStream</code> of
+          <code className="text-amber-700">sdk.download(object, opts)</code>{' '}
+          returns a <code className="text-amber-700">ReadableStream</code> of
           decrypted bytes. Per-shard progress is reported via{' '}
-          <code className="text-amber-300">onShardUploaded</code> /{' '}
-          <code className="text-amber-300">onShardDownloaded</code>.
+          <code className="text-amber-700">onShardUploaded</code> /{' '}
+          <code className="text-amber-700">onShardDownloaded</code>.
         </p>
       </DevNote>
 
       {error && (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-red-950/80 border border-red-900 rounded-lg text-red-300 text-sm">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
           <span>{error}</span>
           <button
             type="button"
             onClick={() => setError(null)}
-            className="text-red-500 hover:text-red-300 text-xs ml-4 shrink-0"
+            className="text-red-600 hover:text-red-900 text-xs ml-4 shrink-0"
           >
             Dismiss
           </button>
@@ -280,10 +280,10 @@ export function UploadZone() {
         }}
         className={`relative block border-2 border-dashed rounded-xl p-16 text-center transition-all duration-150 ${
           uploading
-            ? 'border-neutral-800 cursor-default'
+            ? 'border-neutral-300 cursor-default'
             : dragOver
-              ? 'border-green-500 bg-green-500/5 cursor-pointer'
-              : 'border-neutral-800 hover:border-neutral-600 cursor-pointer'
+              ? 'border-green-600 bg-green-600/5 cursor-pointer'
+              : 'border-neutral-300 hover:border-neutral-400 cursor-pointer'
         }`}
       >
         <input
@@ -300,24 +300,24 @@ export function UploadZone() {
 
         {activeUpload ? (
           <div className="space-y-4">
-            <p className="text-neutral-300 text-sm">
+            <p className="text-neutral-700 text-sm">
               Uploading{' '}
-              <span className="text-white">{activeUpload.fileName}</span>{' '}
+              <span className="text-neutral-900">{activeUpload.fileName}</span>{' '}
               <span className="text-neutral-500">
                 ({formatBytes(activeUpload.fileSize)})
               </span>
             </p>
-            <div className="w-full max-w-xs mx-auto bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full max-w-xs mx-auto bg-neutral-200 rounded-full h-1.5 overflow-hidden">
               {activeUpload.shardsDone === 0 ? (
-                <div className="bg-green-500 h-full rounded-full w-1/4 animate-indeterminate" />
+                <div className="bg-green-600 h-full rounded-full w-1/4 animate-indeterminate" />
               ) : (
                 <div
-                  className="bg-green-500 h-full rounded-full transition-all duration-300"
+                  className="bg-green-600 h-full rounded-full transition-all duration-300"
                   style={{ width: `${uploadPercent}%` }}
                 />
               )}
             </div>
-            <p className="text-neutral-600 text-xs font-mono">
+            <p className="text-neutral-500 text-xs font-mono">
               {activeUpload.shardsDone} shards &middot;{' '}
               {formatBytes(
                 (activeUpload.bytesUploaded / activeUpload.encodedTotal) *
@@ -329,7 +329,7 @@ export function UploadZone() {
         ) : (
           <div className="space-y-2">
             <svg
-              className="w-8 h-8 mx-auto text-neutral-700"
+              className="w-8 h-8 mx-auto text-neutral-400"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -339,10 +339,10 @@ export function UploadZone() {
               <path d="M12 16V4m0 0l-4 4m4-4l4 4" />
               <path d="M20 16v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2" />
             </svg>
-            <p className="text-neutral-400 text-sm">
+            <p className="text-neutral-600 text-sm">
               Drop files here or click to browse
             </p>
-            <p className="text-neutral-600 text-xs">
+            <p className="text-neutral-500 text-xs">
               Encrypted end-to-end and stored on the Sia network
             </p>
           </div>
@@ -355,7 +355,7 @@ export function UploadZone() {
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
             {files.length} file{files.length !== 1 ? 's' : ''}
           </h2>
-          <div className="divide-y divide-neutral-800/60">
+          <div className="divide-y divide-neutral-200/80">
             {files.map((file) => {
               const isDownloading = downloading === file.id
               return (
@@ -364,10 +364,10 @@ export function UploadZone() {
                   className="flex items-center justify-between py-3 group"
                 >
                   <div className="flex-1 min-w-0 mr-4">
-                    <p className="text-sm text-neutral-200 truncate">
+                    <p className="text-sm text-neutral-900 truncate">
                       {file.metadata.name}
                     </p>
-                    <p className="text-xs text-neutral-600 mt-0.5">
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       {formatBytes(file.metadata.size)}
                       {file.metadata.type !== 'application/octet-stream' && (
                         <span> &middot; {file.metadata.type}</span>
@@ -388,7 +388,7 @@ export function UploadZone() {
                       type="button"
                       onClick={() => downloadFile(file)}
                       disabled={downloading !== null}
-                      className="text-xs text-neutral-600 hover:text-neutral-300 disabled:opacity-30 disabled:cursor-default transition-colors"
+                      className="text-xs text-neutral-500 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-default transition-colors"
                       title="Download"
                     >
                       {isDownloading ? (
@@ -418,7 +418,7 @@ export function UploadZone() {
                       )}
                     </button>
                     <span
-                      className="text-[11px] text-neutral-700 font-mono group-hover:text-neutral-500 transition-colors"
+                      className="text-[11px] text-neutral-400 font-mono group-hover:text-neutral-700 transition-colors"
                       title={file.metadata.hash}
                     >
                       {file.metadata.hash.slice(0, 8)}...
