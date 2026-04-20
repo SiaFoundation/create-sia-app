@@ -12,3 +12,7 @@ export const APP_META: AppMetadata = {
   logoUrl: undefined,
   callbackUrl: undefined,
 }
+
+// Erasure coding parameters — passed to sdk.upload() and encodedSize().
+export const DATA_SHARDS = 10
+export const PARITY_SHARDS = 20

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { PinnedObject, type ShardProgress } from 'sia-storage'
-import { APP_KEY } from '../../lib/constants'
+import { encodedSize, PinnedObject, type ShardProgress } from 'sia-storage'
+import { APP_KEY, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
 
@@ -37,9 +37,10 @@ type UploadedFile = {
 
 type UploadProgress = {
   fileName: string
+  fileSize: number
   shardsDone: number
   bytesUploaded: number
-  totalBytes: number
+  encodedTotal: number
 }
 
 type DownloadProgress = {
@@ -88,11 +89,13 @@ export function UploadZone() {
     if (!sdk) return
     setUploading(true)
     setError(null)
+    const encodedTotal = encodedSize(file.size, DATA_SHARDS, PARITY_SHARDS)
     setActiveUpload({
       fileName: file.name,
+      fileSize: file.size,
       shardsDone: 0,
       bytesUploaded: 0,
-      totalBytes: file.size,
+      encodedTotal,
     })
 
     try {
@@ -107,14 +110,17 @@ export function UploadZone() {
       let bytesUploaded = 0
       const pinnedObject = await sdk.upload(object, file.stream(), {
         maxInflight: 10,
+        dataShards: DATA_SHARDS,
+        parityShards: PARITY_SHARDS,
         onShardUploaded: (progress: ShardProgress) => {
           shardsDone++
           bytesUploaded += progress.shardSize
           setActiveUpload({
             fileName: file.name,
+            fileSize: file.size,
             shardsDone,
             bytesUploaded,
-            totalBytes: file.size,
+            encodedTotal,
           })
         },
       })
@@ -215,7 +221,7 @@ export function UploadZone() {
     ? Math.min(
         100,
         Math.round(
-          (activeUpload.bytesUploaded / activeUpload.totalBytes) * 100,
+          (activeUpload.bytesUploaded / activeUpload.encodedTotal) * 100,
         ),
       )
     : 0
@@ -296,7 +302,10 @@ export function UploadZone() {
           <div className="space-y-4">
             <p className="text-neutral-300 text-sm">
               Uploading{' '}
-              <span className="text-white">{activeUpload.fileName}</span>
+              <span className="text-white">{activeUpload.fileName}</span>{' '}
+              <span className="text-neutral-500">
+                ({formatBytes(activeUpload.fileSize)})
+              </span>
             </p>
             <div className="w-full max-w-xs mx-auto bg-neutral-800 rounded-full h-1.5 overflow-hidden">
               {activeUpload.shardsDone === 0 ? (
@@ -310,8 +319,11 @@ export function UploadZone() {
             </div>
             <p className="text-neutral-600 text-xs font-mono">
               {activeUpload.shardsDone} shards &middot;{' '}
-              {formatBytes(activeUpload.bytesUploaded)} /{' '}
-              {formatBytes(activeUpload.totalBytes)}
+              {formatBytes(
+                (activeUpload.bytesUploaded / activeUpload.encodedTotal) *
+                  activeUpload.fileSize,
+              )}{' '}
+              / {formatBytes(activeUpload.fileSize)}
             </p>
           </div>
         ) : (
