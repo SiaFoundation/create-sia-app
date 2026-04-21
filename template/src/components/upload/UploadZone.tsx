@@ -1,5 +1,9 @@
+import {
+  encodedSize,
+  PinnedObject,
+  type ShardProgress,
+} from '@siafoundation/sia-storage'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { encodedSize, PinnedObject, type ShardProgress } from '@siafoundation/sia-storage'
 import { APP_KEY, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
