@@ -56,7 +56,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.compare.outputs.changed == 'true'
-        run: cd template && bun install
+        run: bun install
 
       - name: Create changeset
         if: steps.compare.outputs.changed == 'true'
@@ -77,6 +77,6 @@ jobs:
           LATEST="${{ steps.latest.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add template/package.json template/bun.lock .changeset/sdk-bump.md
+          git add template/package.json bun.lock .changeset/sdk-bump.md
           git commit -m "chore: bump @siafoundation/sia-storage to ${LATEST}"
           git push
