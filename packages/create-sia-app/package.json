@@ -1,6 +1,6 @@
 {
   "name": "create-sia-app",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "type": "module",
   "bin": {
     "create-sia-app": "./dist/index.js"
