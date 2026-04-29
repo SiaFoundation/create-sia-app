@@ -2,6 +2,10 @@
 versioned_files = ["packages/create-sia-app/package.json"]
 changelog = "CHANGELOG.md"
 
+[github]
+owner = "SiaFoundation"
+repo = "create-sia-app"
+
 [[workflows]]
 name = "prepare-release"
 
@@ -11,24 +15,27 @@ command = "git switch -c release"
 
 [[workflows.steps]]
 type = "PrepareRelease"
+ignore_conventional_commits = true
 
 [[workflows.steps]]
 type = "Command"
-command = "git commit -m \"chore: prepare release $version\""
+command = "bun run scripts/format-package.ts"
+
+[[workflows.steps]]
+type = "Command"
+command = "git add -A"
+
+[[workflows.steps]]
+type = "Command"
+command = "git commit -m 'chore: release'"
 
 [[workflows.steps]]
 type = "Command"
 command = "git push --force --set-upstream origin release"
 
 [[workflows.steps]]
-type = "CreatePullRequest"
-base = "main"
-
-[workflows.steps.title]
-template = "chore: release $version"
-
-[workflows.steps.body]
-template = "Merging this PR will publish a new release to npm.\n\n$changelog"
+type = "Command"
+command = "bun scripts/create-release-pr.ts"
 
 [[workflows]]
 name = "release"
@@ -41,7 +48,3 @@ name = "document-change"
 
 [[workflows.steps]]
 type = "CreateChangeFile"
-
-[github]
-owner = "SiaFoundation"
-repo = "create-sia-app"
