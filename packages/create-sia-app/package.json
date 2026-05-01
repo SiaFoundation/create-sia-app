@@ -1,6 +1,6 @@
 {
   "name": "create-sia-app",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Scaffold a private, encrypted storage app on the Sia network.",
   "license": "MIT",
   "repository": {
