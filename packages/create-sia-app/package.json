@@ -1,6 +1,16 @@
 {
   "name": "create-sia-app",
   "version": "0.1.17",
+  "description": "Scaffold a private, encrypted storage app on the Sia network.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SiaFoundation/create-sia-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SiaFoundation/create-sia-app/issues"
+  },
+  "homepage": "https://github.com/SiaFoundation/create-sia-app#readme",
   "type": "module",
   "bin": {
     "create-sia-app": "./dist/index.js"
