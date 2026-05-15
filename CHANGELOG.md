@@ -1,4 +1,10 @@
 # Changelog
+## 0.1.19 (2026-05-15)
+
+### Fixes
+
+- Bump @siafoundation/sia-storage to 0.0.10
+
 ## 0.1.18 (2026-05-01)
 
 ### Fixes
