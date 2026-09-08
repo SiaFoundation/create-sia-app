@@ -6,13 +6,27 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   check-and-bump:
     runs-on: ubuntu-latest
     steps:
+      # An app token, not GITHUB_TOKEN: a push made with the workflow token
+      # triggers no workflows, so the bump commit reaches main without CI
+      # running on it and without Prepare Release opening a release PR.
+      - name: Mint bot token
+        id: bot-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.SIA_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.SIA_CI_BOT_PRIVATE_KEY }}
+          permission-contents: write
+
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # The final step pushes using the credentials checkout saves here.
+          token: ${{ steps.bot-token.outputs.token }}
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
