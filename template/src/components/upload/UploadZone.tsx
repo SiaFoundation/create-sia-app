@@ -1,7 +1,9 @@
 import {
+  type DownloadOptions,
   encodedSize,
   PinnedObject,
   type ShardProgress,
+  type UploadOptions,
 } from '@siafoundation/sia-storage'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { APP_KEY, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
@@ -113,7 +115,6 @@ export function UploadZone() {
       let shardsDone = 0
       let bytesUploaded = 0
       const pinnedObject = await sdk.upload(object, file.stream(), {
-        maxInflight: 10,
         dataShards: DATA_SHARDS,
         parityShards: PARITY_SHARDS,
         onShardUploaded: (progress: ShardProgress) => {
@@ -127,7 +128,7 @@ export function UploadZone() {
             encodedTotal,
           })
         },
-      })
+      } satisfies UploadOptions)
 
       const metadata: FileMetadata = {
         name: file.name,
@@ -166,7 +167,6 @@ export function UploadZone() {
     try {
       let shardsDone = 0
       const stream = sdk.download(file.object, {
-        maxInflight: 10,
         onShardDownloaded: () => {
           shardsDone++
           setDownloadProgress((prev) => ({
@@ -175,7 +175,7 @@ export function UploadZone() {
             totalBytes: file.metadata.size,
           }))
         },
-      })
+      } satisfies DownloadOptions)
 
       const reader = stream.getReader()
       const chunks: Uint8Array[] = []
