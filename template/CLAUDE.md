@@ -74,19 +74,18 @@ loading → connect → approve → recovery → connected
 ### Upload → pin → metadata
 
 ```ts
-import { PinnedObject } from '@siafoundation/sia-storage'
+import { PinnedObject, type UploadOptions } from '@siafoundation/sia-storage'
 import { DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 
 const object = new PinnedObject()
 const pinned = await sdk.upload(object, file.stream(), {
-  maxInflight: 10,
   dataShards: DATA_SHARDS,
   parityShards: PARITY_SHARDS,
   onShardUploaded: (p) => {
     // p: { hostKey, shardSize, shardIndex, slabIndex, elapsedMs }
     // shardSize is post-erasure-coding bytes, not source bytes.
   },
-})
+} satisfies UploadOptions)
 
 pinned.updateMetadata(
   new TextEncoder().encode(JSON.stringify({ name: file.name, type: file.type, size: file.size })),
@@ -99,6 +98,11 @@ All three calls matter:
 1. `upload` writes the encrypted shards to hosts.
 2. `pinObject` tells the indexer to keep it (without this, it's eventually GC'd).
 3. `updateObjectMetadata` persists the descriptor so other sessions can find it.
+
+Keep the `satisfies UploadOptions`. The SDK's browser build types the options
+argument as `any`, so without it an option the SDK has dropped still compiles
+and is ignored at runtime. That is how `maxInflight` survived here long after
+the SDK removed it (SiaFoundation/sia-sdk-rs#445).
 
 ### Byte progress (source units, not on-wire units)
 
@@ -115,7 +119,7 @@ const sourceProgress = (bytesUploaded / encodedTotal) * file.size
 Returns a `ReadableStream<Uint8Array>`. Buffer or pipe:
 
 ```ts
-const stream = sdk.download(pinnedObject, { maxInflight: 10 })
+const stream = sdk.download(pinnedObject)
 const blob = await new Response(stream).blob()
 ```
 
@@ -142,7 +146,7 @@ Share URLs embed the decryption key in the fragment (`#...`) — never sent to t
 `sdk.uploadPacked()` batches small files into shared slabs to avoid wasting storage:
 
 ```ts
-const packed = sdk.uploadPacked({ maxInflight: 10 })
+const packed = sdk.uploadPacked()
 await packed.add(fileA.stream())
 await packed.add(fileB.stream())
 for (const obj of await packed.finalize()) await sdk.pinObject(obj)
