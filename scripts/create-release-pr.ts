@@ -9,12 +9,13 @@ import { join } from 'node:path'
 
 const lines = readFileSync('CHANGELOG.md', 'utf-8').split('\n')
 const start = lines.findIndex((l) => l.startsWith('## '))
-if (start === -1) {
+const heading = lines[start]
+if (heading === undefined) {
   console.log('No changelog entry; skipping PR.')
   process.exit(0)
 }
 const end = lines.findIndex((l, i) => i > start && l.startsWith('## '))
-const version = lines[start]
+const version = heading
   .replace(/^## /, '')
   .replace(/\s*\(.*\)/, '')
   .trim()
