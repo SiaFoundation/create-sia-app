@@ -23,9 +23,9 @@ const envPath = join(ROOT, '.env')
 if (existsSync(envPath)) {
   const envContent = readFileSync(envPath, 'utf-8')
   for (const line of envContent.split('\n')) {
-    const match = line.match(/^(\w+)=(.*)$/)
-    if (match) {
-      process.env[match[1]] = match[2]
+    const [, key, value] = line.match(/^(\w+)=(.*)$/) ?? []
+    if (key && value !== undefined) {
+      process.env[key] = value
     }
   }
 }
