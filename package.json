@@ -9,10 +9,13 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint --deny-warnings",
     "publish": "bun scripts/publish.ts",
-    "test:scaffold": "bun scripts/test-scaffold.ts"
+    "test:scaffold": "bun scripts/test-scaffold.ts",
+    "typecheck": "tsc -p tsconfig.json && bun run --cwd packages/create-sia-app typecheck"
   },
   "devDependencies": {
+    "@types/bun": "1.4.2",
     "oxfmt": "0.67.0",
-    "oxlint": "1.82.0"
+    "oxlint": "1.82.0",
+    "typescript": "7.0.2"
   }
 }
