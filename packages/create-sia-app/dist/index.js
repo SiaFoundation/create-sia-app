@@ -155,6 +155,9 @@ function linkAgentGuides(dest) {
     }
   }
 }
+function escapeSingleQuoted(value) {
+  return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+}
 function detectPackageManager() {
   try {
     execSync("bun --version", { stdio: "ignore" });
@@ -179,8 +182,8 @@ async function scaffold(options) {
   const replacements = [
     ["{{APP_NAME}}", projectName],
     ["{{APP_KEY}}", appKey],
-    ["{{INDEXER_URL}}", indexerUrl],
-    ["{{APP_DESCRIPTION}}", appDescription]
+    ["{{INDEXER_URL}}", escapeSingleQuoted(indexerUrl)],
+    ["{{APP_DESCRIPTION}}", escapeSingleQuoted(appDescription)]
   ];
   copyDir(templateDir, targetDir, replacements);
   linkAgentGuides(targetDir);

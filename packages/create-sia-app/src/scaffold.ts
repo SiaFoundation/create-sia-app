@@ -77,6 +77,14 @@ function linkAgentGuides(dest: string) {
   }
 }
 
+// The indexer URL and description are free text from the prompts and land
+// inside single-quoted strings in src/lib/constants.ts, so an apostrophe
+// would end the string and break the generated app. The project name and app
+// key are validated to characters that need no escaping.
+export function escapeSingleQuoted(value: string) {
+  return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")
+}
+
 function detectPackageManager(): 'bun' | 'npm' {
   try {
     execSync('bun --version', { stdio: 'ignore' })
@@ -108,8 +116,8 @@ export async function scaffold(options: ScaffoldOptions) {
   const replacements: [string, string][] = [
     ['{{APP_NAME}}', projectName],
     ['{{APP_KEY}}', appKey],
-    ['{{INDEXER_URL}}', indexerUrl],
-    ['{{APP_DESCRIPTION}}', appDescription],
+    ['{{INDEXER_URL}}', escapeSingleQuoted(indexerUrl)],
+    ['{{APP_DESCRIPTION}}', escapeSingleQuoted(appDescription)],
   ]
 
   copyDir(templateDir, targetDir, replacements)
