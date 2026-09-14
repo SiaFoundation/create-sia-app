@@ -22,13 +22,15 @@
   "scripts": {
     "build": "rm -rf ./dist && bun build src/index.ts --target node --format esm --packages external --outdir dist && rm -rf ./template && cp -r ../../template ./template && rm -rf ./template/node_modules ./template/dist ./template/test-results",
     "dev": "bun build src/index.ts --target node --format esm --packages external --outdir dist --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test ./test"
   },
   "dependencies": {
     "@clack/prompts": "1.8.0",
     "picocolors": "1.1.1"
   },
   "devDependencies": {
+    "@types/bun": "1.4.2",
     "@types/node": "22.20.2",
     "typescript": "7.0.2"
   },

@@ -25,7 +25,11 @@ function findTemplateDir(): string {
   throw new Error('Could not find template directory')
 }
 
-function copyDir(src: string, dest: string, replacements: [string, string][]) {
+export function copyDir(
+  src: string,
+  dest: string,
+  replacements: [string, string][],
+) {
   fs.mkdirSync(dest, { recursive: true })
 
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
@@ -66,7 +70,7 @@ function copyDir(src: string, dest: string, replacements: [string, string][]) {
 // without developer mode, so a copy is the fallback.
 const AGENT_GUIDE_LINKS = ['CLAUDE.md']
 
-function linkAgentGuides(dest: string) {
+export function linkAgentGuides(dest: string) {
   for (const name of AGENT_GUIDE_LINKS) {
     const linkPath = path.join(dest, name)
     try {
