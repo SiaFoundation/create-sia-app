@@ -1,7 +1,7 @@
 #!/usr/bin/env node
+import { getDefaultOptions } from './defaults.js'
 import { runPrompts } from './prompts.js'
 import { scaffold } from './scaffold.js'
-import { getDefaultOptions } from './defaults.js'
 
 async function main() {
   const name = process.argv[2]

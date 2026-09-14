@@ -1,8 +1,18 @@
 {
   "private": true,
-  "workspaces": ["template", "packages/*"],
+  "workspaces": [
+    "template",
+    "packages/*"
+  ],
   "scripts": {
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint --deny-warnings",
     "publish": "bun scripts/publish.ts",
     "test:scaffold": "bun scripts/test-scaffold.ts"
+  },
+  "devDependencies": {
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0"
   }
 }

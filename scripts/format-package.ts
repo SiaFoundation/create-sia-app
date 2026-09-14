@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Normalize packages/create-sia-app/package.json formatting after Knope's
 // PrepareRelease step rewrites it. Knope's writer can drop the trailing
-// newline, which biome and editors both flag.
+// newline, which oxfmt and editors both flag.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 

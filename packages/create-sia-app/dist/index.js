@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
-// src/prompts.ts
+// src/defaults.ts
 import crypto from "crypto";
+function getDefaultOptions(projectName) {
+  return {
+    projectName,
+    appKey: crypto.randomBytes(32).toString("hex"),
+    indexerUrl: "https://sia.storage",
+    appDescription: "A Sia storage app"
+  };
+}
+
+// src/prompts.ts
+import crypto2 from "crypto";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 async function runPrompts() {
@@ -49,7 +60,7 @@ async function runPrompts() {
     }
     appKey = existingKey.trim();
   } else {
-    appKey = crypto.randomBytes(32).toString("hex");
+    appKey = crypto2.randomBytes(32).toString("hex");
     p.log.info(`Generated app key: ${pc.cyan(appKey)}`);
   }
   const indexerUrl = await p.text({
@@ -178,17 +189,6 @@ async function scaffold(options) {
     "Next steps"
   );
   p2.outro(pc2.green("Happy building!"));
-}
-
-// src/defaults.ts
-import crypto2 from "crypto";
-function getDefaultOptions(projectName) {
-  return {
-    projectName,
-    appKey: crypto2.randomBytes(32).toString("hex"),
-    indexerUrl: "https://sia.storage",
-    appDescription: "A Sia storage app"
-  };
 }
 
 // src/index.ts

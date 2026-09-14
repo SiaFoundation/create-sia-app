@@ -25,6 +25,7 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
+
 import { $ } from 'bun'
 
 const ROOT = join(import.meta.dir, '..')
@@ -67,14 +68,24 @@ async function main() {
   step('Packing and installing CLI tarball')
   rmSync(SCRATCH, { recursive: true, force: true })
   mkdirSync(INSTALL_DIR, { recursive: true })
-  const tarball = (await $`npm pack --silent --pack-destination ${SCRATCH}`.cwd(CLI_DIR).text())
+  const tarball = (
+    await $`npm pack --silent --pack-destination ${SCRATCH}`.cwd(CLI_DIR).text()
+  )
     .trim()
     .split('\n')
     .at(-1)
   if (!tarball) fail('npm pack printed no tarball name')
   await $`npm init -y`.cwd(INSTALL_DIR).quiet()
-  await $`npm install --no-audit --no-fund ${join(SCRATCH, tarball)}`.cwd(INSTALL_DIR)
-  const cliBin = join(INSTALL_DIR, 'node_modules', 'create-sia-app', 'dist', 'index.js')
+  await $`npm install --no-audit --no-fund ${join(SCRATCH, tarball)}`.cwd(
+    INSTALL_DIR,
+  )
+  const cliBin = join(
+    INSTALL_DIR,
+    'node_modules',
+    'create-sia-app',
+    'dist',
+    'index.js',
+  )
   if (!existsSync(cliBin)) fail(`installed CLI binary missing: ${cliBin}`)
 
   step('Scaffolding')
@@ -84,20 +95,27 @@ async function main() {
 
   step('Checking scaffolded files')
   const pkg = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf-8'))
-  if (pkg.name !== APP_NAME) fail(`package.json name is "${pkg.name}", expected "${APP_NAME}"`)
+  if (pkg.name !== APP_NAME)
+    fail(`package.json name is "${pkg.name}", expected "${APP_NAME}"`)
   for (const file of listFiles(APP_DIR)) {
-    if (file.endsWith('bun.lock') || file.endsWith('package-lock.json')) continue
+    if (file.endsWith('bun.lock') || file.endsWith('package-lock.json'))
+      continue
     if (/\{\{[A-Z_]+\}\}/.test(readFileSync(file, 'utf-8'))) {
       fail(`${relative(APP_DIR, file)} still contains a {{placeholder}}`)
     }
   }
   if (!existsSync(join(APP_DIR, '.gitignore'))) fail('.gitignore missing')
-  if (existsSync(join(APP_DIR, '_gitignore'))) fail('_gitignore was not renamed')
+  if (existsSync(join(APP_DIR, '_gitignore')))
+    fail('_gitignore was not renamed')
   const agents = join(APP_DIR, 'AGENTS.md')
-  if (!existsSync(agents) || !lstatSync(agents).isFile()) fail('AGENTS.md missing')
+  if (!existsSync(agents) || !lstatSync(agents).isFile())
+    fail('AGENTS.md missing')
   const claude = join(APP_DIR, 'CLAUDE.md')
   if (!existsSync(claude)) fail('CLAUDE.md missing')
-  if (!lstatSync(claude).isSymbolicLink() || readlinkSync(claude) !== 'AGENTS.md') {
+  if (
+    !lstatSync(claude).isSymbolicLink() ||
+    readlinkSync(claude) !== 'AGENTS.md'
+  ) {
     fail('CLAUDE.md is not a symlink to AGENTS.md')
   }
 
@@ -111,7 +129,9 @@ async function main() {
   await $`bun run build`.cwd(APP_DIR)
   const assets = readdirSync(join(APP_DIR, 'dist/assets'))
   if (!assets.some((f) => f.endsWith('.wasm'))) {
-    fail(`Vite build produced no .wasm asset in dist/assets/:\n${assets.join('\n')}`)
+    fail(
+      `Vite build produced no .wasm asset in dist/assets/:\n${assets.join('\n')}`,
+    )
   }
 
   step('Done')
