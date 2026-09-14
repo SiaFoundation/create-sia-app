@@ -1,7 +1,12 @@
 #!/usr/bin/env bun
 /**
- * Smoke-test the full scaffold flow end-to-end: build the CLI, run it against
- * a temp dir, then type-check, lint, and build the scaffolded project.
+ * Smoke-test the full scaffold flow end-to-end: build the CLI, pack it into
+ * the same tarball npm would publish, install that tarball, run it against a
+ * temp dir, then type-check, lint, and build the scaffolded project.
+ *
+ * Running the packed tarball rather than the repo checkout matters: npm drops
+ * symlinks and anything outside `files` when packing, and a scaffold from the
+ * checkout cannot see either loss.
  *
  *   bun run scripts/test-scaffold.ts
  *   bun run scripts/test-scaffold.ts --keep         # leave the temp scaffold in place
@@ -9,19 +14,27 @@
  */
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  rmSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
+import { join, relative } from 'node:path'
 import { $ } from 'bun'
 
 const ROOT = join(import.meta.dir, '..')
 const CLI_DIR = join(ROOT, 'packages', 'create-sia-app')
-const CLI_BIN = join(CLI_DIR, 'dist', 'index.js')
 
 const KEEP = process.argv.includes('--keep')
 const SKIP_BUILD = process.argv.includes('--skip-build')
 
 const SCRATCH = join(tmpdir(), 'create-sia-app-scaffold-test')
+const INSTALL_DIR = join(SCRATCH, 'cli')
 const APP_NAME = 'scaffold-smoke-app'
 const APP_DIR = join(SCRATCH, APP_NAME)
 
@@ -34,27 +47,59 @@ function step(msg: string) {
   console.log(`\n── ${msg} ──`)
 }
 
+function listFiles(dir: string): string[] {
+  const files: string[] = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules') continue
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) files.push(...listFiles(path))
+    else files.push(path)
+  }
+  return files
+}
+
 async function main() {
   if (!SKIP_BUILD) {
     step('Building CLI')
     await $`bun run build`.cwd(CLI_DIR)
   }
-  if (!existsSync(CLI_BIN)) {
-    fail(`CLI binary missing: ${CLI_BIN}. Run without --skip-build first.`)
-  }
+
+  step('Packing and installing CLI tarball')
+  rmSync(SCRATCH, { recursive: true, force: true })
+  mkdirSync(INSTALL_DIR, { recursive: true })
+  const tarball = (await $`npm pack --silent --pack-destination ${SCRATCH}`.cwd(CLI_DIR).text())
+    .trim()
+    .split('\n')
+    .at(-1)
+  if (!tarball) fail('npm pack printed no tarball name')
+  await $`npm init -y`.cwd(INSTALL_DIR).quiet()
+  await $`npm install --no-audit --no-fund ${join(SCRATCH, tarball)}`.cwd(INSTALL_DIR)
+  const cliBin = join(INSTALL_DIR, 'node_modules', 'create-sia-app', 'dist', 'index.js')
+  if (!existsSync(cliBin)) fail(`installed CLI binary missing: ${cliBin}`)
 
   step('Scaffolding')
-  rmSync(SCRATCH, { recursive: true, force: true })
-  mkdirSync(SCRATCH, { recursive: true })
   // The CLI takes the name as a positional arg and uses default options
   // (random app key, default indexer, default description) when given one.
-  execFileSync('node', [CLI_BIN, APP_NAME], { cwd: SCRATCH, stdio: 'inherit' })
+  execFileSync('node', [cliBin, APP_NAME], { cwd: SCRATCH, stdio: 'inherit' })
 
-  step('Checking placeholder substitution')
+  step('Checking scaffolded files')
   const pkg = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf-8'))
   if (pkg.name !== APP_NAME) fail(`package.json name is "${pkg.name}", expected "${APP_NAME}"`)
-  const constants = readFileSync(join(APP_DIR, 'src/lib/constants.ts'), 'utf-8')
-  if (constants.includes('{{')) fail(`constants.ts still contains placeholders`)
+  for (const file of listFiles(APP_DIR)) {
+    if (file.endsWith('bun.lock') || file.endsWith('package-lock.json')) continue
+    if (/\{\{[A-Z_]+\}\}/.test(readFileSync(file, 'utf-8'))) {
+      fail(`${relative(APP_DIR, file)} still contains a {{placeholder}}`)
+    }
+  }
+  if (!existsSync(join(APP_DIR, '.gitignore'))) fail('.gitignore missing')
+  if (existsSync(join(APP_DIR, '_gitignore'))) fail('_gitignore was not renamed')
+  const agents = join(APP_DIR, 'AGENTS.md')
+  if (!existsSync(agents) || !lstatSync(agents).isFile()) fail('AGENTS.md missing')
+  const claude = join(APP_DIR, 'CLAUDE.md')
+  if (!existsSync(claude)) fail('CLAUDE.md missing')
+  if (!lstatSync(claude).isSymbolicLink() || readlinkSync(claude) !== 'AGENTS.md') {
+    fail('CLAUDE.md is not a symlink to AGENTS.md')
+  }
 
   step('Type-checking scaffolded project')
   await $`bun x tsc -b`.cwd(APP_DIR)

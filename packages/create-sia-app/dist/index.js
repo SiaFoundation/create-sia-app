@@ -98,6 +98,7 @@ function copyDir(src, dest, replacements) {
   fs.mkdirSync(dest, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     if (SKIP_DIRS.has(entry.name)) continue;
+    if (AGENT_GUIDE_LINKS.includes(entry.name)) continue;
     const srcPath = path.join(src, entry.name);
     let destName = entry.name;
     if (destName === "_gitignore") destName = ".gitignore";
@@ -115,6 +116,17 @@ function copyDir(src, dest, replacements) {
         }
         fs.writeFileSync(destPath, content);
       }
+    }
+  }
+}
+var AGENT_GUIDE_LINKS = ["CLAUDE.md"];
+function linkAgentGuides(dest) {
+  for (const name of AGENT_GUIDE_LINKS) {
+    const linkPath = path.join(dest, name);
+    try {
+      fs.symlinkSync("AGENTS.md", linkPath);
+    } catch {
+      fs.copyFileSync(path.join(dest, "AGENTS.md"), linkPath);
     }
   }
 }
@@ -148,6 +160,7 @@ async function scaffold(options) {
     ["{{APP_DESCRIPTION}}", appDescription]
   ];
   copyDir(templateDir, targetDir, replacements);
+  linkAgentGuides(targetDir);
   spinner2.message("Copied template files");
   const pm = detectPackageManager();
   spinner2.message(`Installing dependencies with ${pm}...`);
