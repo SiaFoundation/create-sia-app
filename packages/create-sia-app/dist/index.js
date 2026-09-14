@@ -15,19 +15,30 @@ function getDefaultOptions(projectName) {
 import crypto2 from "node:crypto";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+function isCancelled(value) {
+  return p.isCancel(value);
+}
+function validateProjectName(value) {
+  const name = value?.trim() ?? "";
+  if (!name)
+    return "Project name is required";
+  if (!/^[a-z0-9._-]+$/i.test(name))
+    return "Use only letters, numbers, dashes, dots, and underscores";
+  return;
+}
+function validateAppKey(value) {
+  if (!/^[a-f0-9]{64}$/i.test(value?.trim() ?? ""))
+    return "App key must be a 64-character hex string";
+  return;
+}
 async function runPrompts() {
   p.intro(pc.green("Create Sia App"));
   const projectName = await p.text({
     message: "What is your project name?",
     placeholder: "my-sia-app",
-    validate(value) {
-      if (!value.trim())
-        return "Project name is required";
-      if (!/^[a-z0-9._-]+$/i.test(value.trim()))
-        return "Use only letters, numbers, dashes, dots, and underscores";
-    }
+    validate: validateProjectName
   });
-  if (p.isCancel(projectName)) {
+  if (isCancelled(projectName)) {
     p.cancel("Cancelled.");
     return null;
   }
@@ -42,7 +53,7 @@ async function runPrompts() {
       { value: "existing", label: "Enter an existing app key" }
     ]
   });
-  if (p.isCancel(keyChoice)) {
+  if (isCancelled(keyChoice)) {
     p.cancel("Cancelled.");
     return null;
   }
@@ -50,12 +61,9 @@ async function runPrompts() {
   if (keyChoice === "existing") {
     const existingKey = await p.text({
       message: "Enter your app key (64-char hex)",
-      validate(value) {
-        if (!/^[a-f0-9]{64}$/i.test(value.trim()))
-          return "App key must be a 64-character hex string";
-      }
+      validate: validateAppKey
     });
-    if (p.isCancel(existingKey)) {
+    if (isCancelled(existingKey)) {
       p.cancel("Cancelled.");
       return null;
     }
@@ -68,7 +76,7 @@ async function runPrompts() {
     message: "Indexer URL",
     initialValue: "https://sia.storage"
   });
-  if (p.isCancel(indexerUrl)) {
+  if (isCancelled(indexerUrl)) {
     p.cancel("Cancelled.");
     return null;
   }
@@ -77,7 +85,7 @@ async function runPrompts() {
     placeholder: "My decentralized storage app",
     defaultValue: "A Sia storage app"
   });
-  if (p.isCancel(appDescription)) {
+  if (isCancelled(appDescription)) {
     p.cancel("Cancelled.");
     return null;
   }

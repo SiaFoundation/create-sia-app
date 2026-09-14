@@ -10,20 +10,36 @@ export type ScaffoldOptions = {
   appDescription: string
 }
 
+// clack types isCancel as narrowing to its own unique symbol, which leaves
+// `symbol` in a prompt's `string | symbol` result. This guard removes it.
+function isCancelled(value: unknown): value is symbol {
+  return p.isCancel(value)
+}
+
+export function validateProjectName(value: string | undefined) {
+  const name = value?.trim() ?? ''
+  if (!name) return 'Project name is required'
+  if (!/^[a-z0-9._-]+$/i.test(name))
+    return 'Use only letters, numbers, dashes, dots, and underscores'
+  return undefined
+}
+
+export function validateAppKey(value: string | undefined) {
+  if (!/^[a-f0-9]{64}$/i.test(value?.trim() ?? ''))
+    return 'App key must be a 64-character hex string'
+  return undefined
+}
+
 export async function runPrompts(): Promise<ScaffoldOptions | null> {
   p.intro(pc.green('Create Sia App'))
 
   const projectName = await p.text({
     message: 'What is your project name?',
     placeholder: 'my-sia-app',
-    validate(value) {
-      if (!value.trim()) return 'Project name is required'
-      if (!/^[a-z0-9._-]+$/i.test(value.trim()))
-        return 'Use only letters, numbers, dashes, dots, and underscores'
-    },
+    validate: validateProjectName,
   })
 
-  if (p.isCancel(projectName)) {
+  if (isCancelled(projectName)) {
     p.cancel('Cancelled.')
     return null
   }
@@ -40,7 +56,7 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
     ],
   })
 
-  if (p.isCancel(keyChoice)) {
+  if (isCancelled(keyChoice)) {
     p.cancel('Cancelled.')
     return null
   }
@@ -50,13 +66,10 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
   if (keyChoice === 'existing') {
     const existingKey = await p.text({
       message: 'Enter your app key (64-char hex)',
-      validate(value) {
-        if (!/^[a-f0-9]{64}$/i.test(value.trim()))
-          return 'App key must be a 64-character hex string'
-      },
+      validate: validateAppKey,
     })
 
-    if (p.isCancel(existingKey)) {
+    if (isCancelled(existingKey)) {
       p.cancel('Cancelled.')
       return null
     }
@@ -72,7 +85,7 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
     initialValue: 'https://sia.storage',
   })
 
-  if (p.isCancel(indexerUrl)) {
+  if (isCancelled(indexerUrl)) {
     p.cancel('Cancelled.')
     return null
   }
@@ -83,7 +96,7 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
     defaultValue: 'A Sia storage app',
   })
 
-  if (p.isCancel(appDescription)) {
+  if (isCancelled(appDescription)) {
     p.cancel('Cancelled.')
     return null
   }

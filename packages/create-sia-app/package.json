@@ -25,11 +25,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clack/prompts": "^0.10.0",
-    "picocolors": "^1.1.1"
+    "@clack/prompts": "1.8.0",
+    "picocolors": "1.1.1"
   },
   "devDependencies": {
-    "@types/node": "^22.15.0",
-    "typescript": "~5.9.3"
+    "@types/node": "22.20.2",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
