@@ -1,10 +1,8 @@
 import {
-  type DownloadOptions,
   encodedSize,
   PinnedObject,
   type Sdk,
   type ShardProgress,
-  type UploadOptions,
 } from '@siafoundation/sia-storage'
 import { useEffect, useRef, useState } from 'react'
 
