@@ -1,5 +1,6 @@
 import { AppKey, Builder, initSia } from '@siafoundation/sia-storage'
 import { useEffect, useRef } from 'react'
+
 import { APP_META } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { ApproveScreen } from './ApproveScreen'
@@ -67,7 +68,13 @@ export function AuthFlow() {
       )}
 
       {step === 'loading' && <LoadingScreen />}
-      {step === 'connect' && <ConnectScreen builder={builderRef} />}
+      {step === 'connect' && (
+        <ConnectScreen
+          onBuilder={(builder) => {
+            builderRef.current = builder
+          }}
+        />
+      )}
       {step === 'approve' && <ApproveScreen builder={builderRef} />}
       {step === 'recovery' && <RecoveryScreen builder={builderRef} />}
     </div>

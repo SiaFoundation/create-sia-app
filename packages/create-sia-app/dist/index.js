@@ -181,6 +181,7 @@ async function scaffold(options) {
   spinner2.message(`Installing dependencies with ${pm}...`);
   try {
     execSync(`${pm} install`, { cwd: targetDir, stdio: "ignore" });
+    execSync(`${pm} run fmt`, { cwd: targetDir, stdio: "ignore" });
     spinner2.stop("Project created successfully");
   } catch {
     spinner2.stop("Project created (install failed — run manually)");

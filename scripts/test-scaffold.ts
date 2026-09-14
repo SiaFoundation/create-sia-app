@@ -119,10 +119,7 @@ async function main() {
     fail('CLAUDE.md is not a symlink to AGENTS.md')
   }
 
-  step('Type-checking scaffolded project')
-  await $`bun x tsc -b`.cwd(APP_DIR)
-
-  step('Linting scaffolded project')
+  step('Format, lint, and type-check scaffolded project')
   await $`bun run check`.cwd(APP_DIR)
 
   step('Building scaffolded project')

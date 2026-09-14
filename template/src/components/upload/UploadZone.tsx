@@ -2,10 +2,12 @@ import {
   type DownloadOptions,
   encodedSize,
   PinnedObject,
+  type Sdk,
   type ShardProgress,
   type UploadOptions,
 } from '@siafoundation/sia-storage'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
 import { APP_KEY, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
@@ -57,6 +59,44 @@ type DownloadProgress = {
 
 const isPlaceholderKey = APP_KEY.startsWith('{' + '{')
 
+async function fetchFiles(sdk: Sdk): Promise<UploadedFile[]> {
+  const events = await sdk.objectEvents(undefined, 100)
+  const loaded: UploadedFile[] = []
+  for (const event of events) {
+    if (event.deleted || !event.object) continue
+    const meta = decodeMetadata(event.object.metadata())
+    if (meta?.name) {
+      loaded.push({ id: event.id, metadata: meta, object: event.object })
+    }
+  }
+  return loaded
+}
+
+async function readChunks(
+  stream: ReadableStream<Uint8Array>,
+  onBytes: (bytesRead: number) => void,
+): Promise<Uint8Array[]> {
+  const reader = stream.getReader()
+  const chunks: Uint8Array[] = []
+  let bytesRead = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) return chunks
+    chunks.push(value)
+    bytesRead += value.length
+    onBytes(bytesRead)
+  }
+}
+
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function UploadZone() {
   const sdk = useAuthStore((s) => s.sdk)
   const [files, setFiles] = useState<UploadedFile[]>([])
@@ -69,27 +109,18 @@ export function UploadZone() {
     useState<DownloadProgress | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const loadFiles = useCallback(async () => {
+  useEffect(() => {
     if (!sdk) return
-    try {
-      const events = await sdk.objectEvents(undefined, 100)
-      const loaded: UploadedFile[] = []
-      for (const event of events) {
-        if (event.deleted || !event.object) continue
-        const meta = decodeMetadata(event.object.metadata())
-        if (meta?.name) {
-          loaded.push({ id: event.id, metadata: meta, object: event.object })
-        }
-      }
-      setFiles(loaded)
-    } catch (e) {
-      console.error('Failed to load files:', e)
+    let cancelled = false
+    fetchFiles(sdk)
+      .then((loaded) => {
+        if (!cancelled) setFiles(loaded)
+      })
+      .catch((e) => console.error('Failed to load files:', e))
+    return () => {
+      cancelled = true
     }
   }, [sdk])
-
-  useEffect(() => {
-    loadFiles()
-  }, [loadFiles])
 
   async function uploadFile(file: File) {
     if (!sdk) return
@@ -177,28 +208,16 @@ export function UploadZone() {
         },
       } satisfies DownloadOptions)
 
-      const reader = stream.getReader()
-      const chunks: Uint8Array[] = []
-      let bytesDownloaded = 0
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-        bytesDownloaded += value.length
+      const chunks = await readChunks(stream, (bytesDownloaded) => {
         setDownloadProgress((prev) => ({
           shardsDone: prev?.shardsDone ?? 0,
           bytesDownloaded,
           totalBytes: file.metadata.size,
         }))
-      }
+      })
 
       const blob = new Blob(chunks as BlobPart[], { type: file.metadata.type })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = file.metadata.name
-      a.click()
-      URL.revokeObjectURL(url)
+      saveBlob(blob, file.metadata.name)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Download failed')
     } finally {

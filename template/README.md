@@ -75,7 +75,7 @@ const sdk = useAuthStore((s) => s.sdk)
 - [Vite](https://vite.dev)
 - [Tailwind CSS](https://tailwindcss.com) 4
 - [Zustand](https://zustand.docs.pmnd.rs) (state management)
-- [Biome](https://biomejs.dev) (linting & formatting)
+- [oxlint](https://oxc.rs/docs/guide/usage/linter) and [oxfmt](https://oxc.rs/docs/guide/usage/formatter) (linting & formatting)
 - [@siafoundation/sia-storage](https://www.npmjs.com/package/@siafoundation/sia-storage) (Sia SDK — encryption, erasure coding, direct host transfers via WASM)
 
 ## Project Structure

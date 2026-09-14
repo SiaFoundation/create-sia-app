@@ -4,7 +4,7 @@ This is a starter for apps backed by the [Sia](https://sia.tech) storage network
 
 ## Stack
 
-React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, [`@siafoundation/sia-storage`](https://www.npmjs.com/package/@siafoundation/sia-storage).
+React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, [`@siafoundation/sia-storage`](https://www.npmjs.com/package/@siafoundation/sia-storage). Linting with oxlint, formatting with oxfmt (no semicolons, single quotes, 2-space indent).
 
 ## Types are the source of truth
 
@@ -17,15 +17,15 @@ Don't hallucinate methods. If a method isn't in those files, it doesn't exist.
 
 ## Core concepts
 
-**Indexer** — A service that coordinates storage: it tracks which hosts hold which encrypted shards, handles payments, and repairs slabs when hosts disappear. **It sees only ciphertext.** Trusted for availability and correctness of the repair/payment flow, *not* for data privacy. The indexer URL lives in `src/lib/constants.ts`.
+**Indexer** — A service that coordinates storage: it tracks which hosts hold which encrypted shards, handles payments, and repairs slabs when hosts disappear. **It sees only ciphertext.** Trusted for availability and correctness of the repair/payment flow, _not_ for data privacy. The indexer URL lives in `src/lib/constants.ts`.
 
 **Hosts** — The actual storage providers. The browser talks to them directly over WebTransport for uploads and downloads. Erasure coding means any sufficient subset of hosts is enough to reconstruct a file.
 
 **App** — Identified to the indexer by `APP_KEY` (32-byte hex) + `APP_META` in `src/lib/constants.ts`. Apps are namespaces: objects stored under one `APP_KEY` aren't visible to another.
 
-**User key** — An `AppKey` instance derived from the user's 12-word BIP-39 recovery phrase. It's the encryption key and the indexer-auth identity for that user *within* the app. Persisted as hex in `localStorage` so users don't re-enter the phrase every session.
+**User key** — An `AppKey` instance derived from the user's 12-word BIP-39 recovery phrase. It's the encryption key and the indexer-auth identity for that user _within_ the app. Persisted as hex in `localStorage` so users don't re-enter the phrase every session.
 
-> **`APP_KEY` vs `AppKey`** — `APP_KEY` (constant, screaming snake) is the *app's* identity in `APP_META.appId`. `AppKey` (class, PascalCase) is the *user's* ed25519 key. They are not the same thing.
+> **`APP_KEY` vs `AppKey`** — `APP_KEY` (constant, screaming snake) is the _app's_ identity in `APP_META.appId`. `AppKey` (class, PascalCase) is the _user's_ ed25519 key. They are not the same thing.
 
 **Object** — A file or blob you upload. Represented at rest by a `PinnedObject` handle. Has an ID, a size, one or more slabs, and encrypted metadata.
 
@@ -55,19 +55,19 @@ loading → connect → approve → recovery → connected
 
 ## Key files
 
-| File | Role |
-|---|---|
-| `src/lib/constants.ts` | `APP_KEY`, `APP_NAME`, `APP_META` (`AppMetadata`), indexer default, erasure-coding constants |
-| `src/stores/auth.ts` | Zustand store: holds the `Sdk`, persists `storedKeyHex` + `indexerUrl` |
-| `src/stores/toast.ts` | Toast notifications (auto-dismiss) |
-| `src/components/auth/AuthFlow.tsx` | Orchestrator: `initSia()`, returning-user reconnect |
-| `src/components/auth/ConnectScreen.tsx` | `new Builder(url, APP_META).requestConnection()` |
-| `src/components/auth/ApproveScreen.tsx` | Polls `builder.waitForApproval()` |
-| `src/components/auth/RecoveryScreen.tsx` | Generate / validate phrase → `builder.register()` → `Sdk` |
-| `src/components/upload/UploadZone.tsx` | **Reference implementation.** Full cycle: dropzone → upload → pin → metadata → list → download. Read this first when building new features. |
-| `src/components/Navbar.tsx` | Public key + sign out |
-| `src/components/DevNote.tsx` | Amber callout — remove or replace for production |
-| `src/types/uint8array-hex.d.ts` | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them) |
+| File                                     | Role                                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/constants.ts`                   | `APP_KEY`, `APP_NAME`, `APP_META` (`AppMetadata`), indexer default, erasure-coding constants                                                |
+| `src/stores/auth.ts`                     | Zustand store: holds the `Sdk`, persists `storedKeyHex` + `indexerUrl`                                                                      |
+| `src/stores/toast.ts`                    | Toast notifications (auto-dismiss)                                                                                                          |
+| `src/components/auth/AuthFlow.tsx`       | Orchestrator: `initSia()`, returning-user reconnect                                                                                         |
+| `src/components/auth/ConnectScreen.tsx`  | `new Builder(url, APP_META).requestConnection()`                                                                                            |
+| `src/components/auth/ApproveScreen.tsx`  | Polls `builder.waitForApproval()`                                                                                                           |
+| `src/components/auth/RecoveryScreen.tsx` | Generate / validate phrase → `builder.register()` → `Sdk`                                                                                   |
+| `src/components/upload/UploadZone.tsx`   | **Reference implementation.** Full cycle: dropzone → upload → pin → metadata → list → download. Read this first when building new features. |
+| `src/components/Navbar.tsx`              | Public key + sign out                                                                                                                       |
+| `src/components/DevNote.tsx`             | Amber callout — remove or replace for production                                                                                            |
+| `src/types/uint8array-hex.d.ts`          | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them)                                                           |
 
 ## SDK usage patterns
 
@@ -89,13 +89,16 @@ const pinned = await sdk.upload(object, file.stream(), {
 })
 
 pinned.updateMetadata(
-  new TextEncoder().encode(JSON.stringify({ name: file.name, type: file.type, size: file.size })),
+  new TextEncoder().encode(
+    JSON.stringify({ name: file.name, type: file.type, size: file.size }),
+  ),
 )
 await sdk.pinObject(pinned)
 await sdk.updateObjectMetadata(pinned)
 ```
 
 All three calls matter:
+
 1. `upload` writes the encrypted shards to hosts.
 2. `pinObject` tells the indexer to keep it (without this, it's eventually GC'd).
 3. `updateObjectMetadata` persists the descriptor so other sessions can find it.
@@ -177,6 +180,7 @@ if (events.length) persistCursor(latest(events))
 ```
 
 Operational tips:
+
 - Persist the cursor in `localStorage` keyed by app key.
 - Poll only while the tab is visible (`document.visibilityState === 'visible'`).
 - Advance the cursor only after local merge succeeds.
@@ -242,8 +246,11 @@ Edit `DATA_SHARDS` / `PARITY_SHARDS` in `src/lib/constants.ts`. More parity = su
 bun install     # Install deps
 bun dev         # Vite dev server (WASM loads lazily, ~100ms)
 bun run build   # tsc + Vite production build
-bun run check   # Biome lint + format check (use --write to fix)
+bun run fmt     # oxfmt, rewrites files
+bun run lint    # oxlint
+bun run typecheck
+bun run check   # format check + lint + typecheck
 bun x playwright test e2e/smoke.spec.ts   # App-loads-without-errors smoke
 ```
 
-After any substantive change, run `bun run check` (auto-fix with `bun x biome check . --write`) and `bun run build` before committing.
+After any substantive change, run `bun run fmt`, then `bun run check` and `bun run build` before committing.

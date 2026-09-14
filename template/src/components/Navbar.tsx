@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+
 import { APP_NAME } from '../lib/constants'
 import { useAuthStore } from '../stores/auth'
 import { CopyButton } from './CopyButton'

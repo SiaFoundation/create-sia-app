@@ -49,7 +49,7 @@ bunx create-sia-app
 
 ## Tech Stack
 
-React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, Biome, @siafoundation/sia-storage
+React 19, TypeScript, Vite, Tailwind CSS 4, Zustand, oxlint, oxfmt, @siafoundation/sia-storage
 
 ## Learn More
 
