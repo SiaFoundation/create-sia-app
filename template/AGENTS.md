@@ -79,7 +79,6 @@ import { DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 
 const object = new PinnedObject()
 const pinned = await sdk.upload(object, file.stream(), {
-  maxInflight: 10,
   dataShards: DATA_SHARDS,
   parityShards: PARITY_SHARDS,
   onShardUploaded: (p) => {
@@ -118,7 +117,7 @@ const sourceProgress = (bytesUploaded / encodedTotal) * file.size
 Returns a `ReadableStream<Uint8Array>`. Buffer or pipe:
 
 ```ts
-const stream = sdk.download(pinnedObject, { maxInflight: 10 })
+const stream = sdk.download(pinnedObject)
 const blob = await new Response(stream).blob()
 ```
 
@@ -145,7 +144,7 @@ Share URLs embed the decryption key in the fragment (`#...`) — never sent to t
 `sdk.uploadPacked()` batches small files into shared slabs to avoid wasting storage:
 
 ```ts
-const packed = sdk.uploadPacked({ maxInflight: 10 })
+const packed = sdk.uploadPacked()
 await packed.add(fileA.stream())
 await packed.add(fileB.stream())
 for (const obj of await packed.finalize()) await sdk.pinObject(obj)
@@ -153,7 +152,7 @@ for (const obj of await packed.finalize()) await sdk.pinObject(obj)
 
 ## Syncing with the indexer
 
-`sdk.objectEvents(cursor, limit)` is the one sync primitive. Each `ObjectEvent` has `id`, `updatedAt: Date`, `deleted: boolean`, `object: PinnedObject | null`.
+`sdk.objectEvents(cursor, limit)` is the one sync primitive. Each `ObjectEvent` has `id`, `updatedAt: Date`, `deleted: boolean`, `object: PinnedObject | undefined`.
 
 Cursor is `{ id: string, after: Date }`. Passing it returns events strictly after that point.
 
