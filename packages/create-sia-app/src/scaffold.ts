@@ -28,6 +28,12 @@ function copyDir(src: string, dest: string, replacements: [string, string][]) {
 
 	for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
 		if (SKIP_DIRS.has(entry.name)) continue;
+		// What reaches the published template in place of the CLAUDE.md symlink
+		// depends on the build machine: macOS `cp -r` copies it as a regular
+		// file, GNU cp keeps the link and npm then drops it from the tarball.
+		// Skipping it here and letting linkAgentGuides create it gives the same
+		// result either way.
+		if (AGENT_GUIDE_LINKS.includes(entry.name)) continue;
 
 		const srcPath = path.join(src, entry.name);
 		let destName = entry.name;
@@ -50,6 +56,21 @@ function copyDir(src: string, dest: string, replacements: [string, string][]) {
 				}
 				fs.writeFileSync(destPath, content);
 			}
+		}
+	}
+}
+
+// Agent guides that point at AGENTS.md. Windows refuses to create symlinks
+// without developer mode, so a copy is the fallback.
+const AGENT_GUIDE_LINKS = ["CLAUDE.md"];
+
+function linkAgentGuides(dest: string) {
+	for (const name of AGENT_GUIDE_LINKS) {
+		const linkPath = path.join(dest, name);
+		try {
+			fs.symlinkSync("AGENTS.md", linkPath);
+		} catch {
+			fs.copyFileSync(path.join(dest, "AGENTS.md"), linkPath);
 		}
 	}
 }
@@ -90,6 +111,7 @@ export async function scaffold(options: ScaffoldOptions) {
 	];
 
 	copyDir(templateDir, targetDir, replacements);
+	linkAgentGuides(targetDir);
 	spinner.message("Copied template files");
 
 	const pm = detectPackageManager();
