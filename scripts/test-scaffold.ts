@@ -112,11 +112,15 @@ async function main() {
     fail('AGENTS.md missing')
   const claude = join(APP_DIR, 'CLAUDE.md')
   if (!existsSync(claude)) fail('CLAUDE.md missing')
-  if (
-    !lstatSync(claude).isSymbolicLink() ||
-    readlinkSync(claude) !== 'AGENTS.md'
-  ) {
+  if (lstatSync(claude).isSymbolicLink()) {
+    if (readlinkSync(claude) !== 'AGENTS.md') {
+      fail('CLAUDE.md is a symlink but does not point at AGENTS.md')
+    }
+  } else if (process.platform !== 'win32') {
     fail('CLAUDE.md is not a symlink to AGENTS.md')
+  } else if (readFileSync(claude, 'utf-8') !== readFileSync(agents, 'utf-8')) {
+    // Windows without symlink permission gets a copy instead.
+    fail('CLAUDE.md is neither a symlink to AGENTS.md nor a copy of it')
   }
 
   step('Format, lint, and type-check scaffolded project')

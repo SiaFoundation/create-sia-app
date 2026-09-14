@@ -43,7 +43,7 @@ jobs:
       - name: Get current SDK version from template
         id: current
         run: |
-          CURRENT=$(node -p "require('./template/package.json').dependencies['@siafoundation/sia-storage'].replace('^', '')")
+          CURRENT=$(node -p "require('./template/package.json').dependencies['@siafoundation/sia-storage'].replace(/^[\^~]/, '')")
           echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
 
       - name: Compare versions
@@ -64,7 +64,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('./template/package.json', 'utf8'));
-            pkg.dependencies['@siafoundation/sia-storage'] = '^' + '$LATEST';
+            pkg.dependencies['@siafoundation/sia-storage'] = '$LATEST';
             fs.writeFileSync('./template/package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
