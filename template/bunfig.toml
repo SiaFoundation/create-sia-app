@@ -1,0 +1,8 @@
+# A package version published in the last three days cannot be installed. Most
+# npm supply-chain compromises are caught and unpublished within hours, so the
+# cost is running three days behind on new releases.
+#
+# The Sia SDK is exempt so a fix can be installed the day it ships.
+[install]
+minimumReleaseAge = 259200
+minimumReleaseAgeExcludes = ["@siafoundation/sia-storage"]
