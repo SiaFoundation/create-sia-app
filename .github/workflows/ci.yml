@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  validate:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -19,29 +19,28 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: cd template && bun install
+        run: bun install --frozen-lockfile
 
-      - name: Build
-        run: cd template && bun run build
+      - name: Install Playwright Chromium
+        working-directory: template
+        run: bunx playwright install --with-deps chromium
 
-      - name: Lint
-        run: cd template && bun run check
+      - name: Check
+        run: bun run check
 
-      - name: Install Playwright browsers
-        run: cd template && bunx playwright install chromium
-
-      - name: Smoke test
-        run: cd template && bunx playwright test e2e/smoke.spec.ts
-
-  scaffold-smoke:
-    runs-on: ubuntu-latest
+  scaffold-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-      - name: Install workspace deps
-        run: bun install
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Scaffold smoke test
         run: bun run test:scaffold
