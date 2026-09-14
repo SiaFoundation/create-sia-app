@@ -20,8 +20,8 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean && rm -rf ./template && cp -r ../../template ./template && rm -rf ./template/node_modules ./template/dist ./template/test-results",
-    "dev": "tsup src/index.ts --format esm --watch"
+    "build": "rm -rf ./dist && bun build src/index.ts --target node --format esm --packages external --outdir dist && rm -rf ./template && cp -r ../../template ./template && rm -rf ./template/node_modules ./template/dist ./template/test-results",
+    "dev": "bun build src/index.ts --target node --format esm --packages external --outdir dist --watch"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
-    "tsup": "^8.4.0",
     "typescript": "~5.9.3"
   }
 }

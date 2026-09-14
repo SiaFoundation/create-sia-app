@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // src/defaults.ts
-import crypto from "crypto";
+import crypto from "node:crypto";
 function getDefaultOptions(projectName) {
   return {
     projectName,
@@ -12,7 +12,7 @@ function getDefaultOptions(projectName) {
 }
 
 // src/prompts.ts
-import crypto2 from "crypto";
+import crypto2 from "node:crypto";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 async function runPrompts() {
@@ -21,7 +21,8 @@ async function runPrompts() {
     message: "What is your project name?",
     placeholder: "my-sia-app",
     validate(value) {
-      if (!value.trim()) return "Project name is required";
+      if (!value.trim())
+        return "Project name is required";
       if (!/^[a-z0-9._-]+$/i.test(value.trim()))
         return "Use only letters, numbers, dashes, dots, and underscores";
     }
@@ -89,30 +90,35 @@ async function runPrompts() {
 }
 
 // src/scaffold.ts
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as p2 from "@clack/prompts";
 import pc2 from "picocolors";
-var __dirname = path.dirname(fileURLToPath(import.meta.url));
-var SKIP_DIRS = /* @__PURE__ */ new Set(["node_modules", "dist", ".git"]);
-var BINARY_EXTENSIONS = /* @__PURE__ */ new Set([".wasm", ".png", ".jpg", ".ico", ".svg"]);
+var __dirname2 = path.dirname(fileURLToPath(import.meta.url));
+var SKIP_DIRS = new Set(["node_modules", "dist", ".git"]);
+var BINARY_EXTENSIONS = new Set([".wasm", ".png", ".jpg", ".ico", ".svg"]);
 function findTemplateDir() {
-  const published = path.resolve(__dirname, "..", "template");
-  if (fs.existsSync(published)) return published;
-  const local = path.resolve(__dirname, "..", "..", "..", "template");
-  if (fs.existsSync(local)) return local;
+  const published = path.resolve(__dirname2, "..", "template");
+  if (fs.existsSync(published))
+    return published;
+  const local = path.resolve(__dirname2, "..", "..", "..", "template");
+  if (fs.existsSync(local))
+    return local;
   throw new Error("Could not find template directory");
 }
 function copyDir(src, dest, replacements) {
   fs.mkdirSync(dest, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    if (SKIP_DIRS.has(entry.name)) continue;
-    if (AGENT_GUIDE_LINKS.includes(entry.name)) continue;
+    if (SKIP_DIRS.has(entry.name))
+      continue;
+    if (AGENT_GUIDE_LINKS.includes(entry.name))
+      continue;
     const srcPath = path.join(src, entry.name);
     let destName = entry.name;
-    if (destName === "_gitignore") destName = ".gitignore";
+    if (destName === "_gitignore")
+      destName = ".gitignore";
     const destPath = path.join(dest, destName);
     if (entry.isDirectory()) {
       copyDir(srcPath, destPath, replacements);
@@ -155,9 +161,7 @@ async function scaffold(options) {
   if (fs.existsSync(targetDir)) {
     const entries = fs.readdirSync(targetDir);
     if (entries.length > 0) {
-      p2.log.error(
-        `Directory ${pc2.red(projectName)} already exists and is not empty.`
-      );
+      p2.log.error(`Directory ${pc2.red(projectName)} already exists and is not empty.`);
       process.exit(1);
     }
   }
@@ -179,15 +183,13 @@ async function scaffold(options) {
     execSync(`${pm} install`, { cwd: targetDir, stdio: "ignore" });
     spinner2.stop("Project created successfully");
   } catch {
-    spinner2.stop("Project created (install failed \u2014 run manually)");
+    spinner2.stop("Project created (install failed — run manually)");
   }
-  p2.note(
-    [
-      `${pc2.green("cd")} ${projectName}`,
-      `${pc2.green(pm === "bun" ? "bun dev" : "npm run dev")}`
-    ].join("\n"),
-    "Next steps"
-  );
+  p2.note([
+    `${pc2.green("cd")} ${projectName}`,
+    `${pc2.green(pm === "bun" ? "bun dev" : "npm run dev")}`
+  ].join(`
+`), "Next steps");
   p2.outro(pc2.green("Happy building!"));
 }
 
@@ -195,7 +197,8 @@ async function scaffold(options) {
 async function main() {
   const name = process.argv[2];
   const options = name ? getDefaultOptions(name) : await runPrompts();
-  if (!options) process.exit(0);
+  if (!options)
+    process.exit(0);
   await scaffold(options);
 }
 main().catch((e) => {
