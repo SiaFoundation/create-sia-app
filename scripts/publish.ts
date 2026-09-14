@@ -12,6 +12,7 @@
 
 import { existsSync, readFileSync, writeFileSync, rmSync } from 'fs'
 import { join } from 'path'
+
 import { $ } from 'bun'
 
 const ROOT = join(import.meta.dir, '..')
@@ -58,7 +59,10 @@ try {
     const result = await $`npm publish --access public`.cwd(PKG_DIR).nothrow()
     if (result.exitCode !== 0) {
       const stderr = result.stderr.toString()
-      if (stderr.includes('EPUBLISHCONFLICT') || stderr.includes('cannot publish over')) {
+      if (
+        stderr.includes('EPUBLISHCONFLICT') ||
+        stderr.includes('cannot publish over')
+      ) {
         console.log('Already published, skipping.')
       } else {
         console.error('FAILED:', stderr)

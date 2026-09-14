@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+
 import type { ScaffoldOptions } from './prompts.js'
 
 export function getDefaultOptions(projectName: string): ScaffoldOptions {
