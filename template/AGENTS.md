@@ -51,7 +51,7 @@ loading → connect → approve → recovery → connected
 
 **Returning users** skip connect/approve/recovery entirely: `AuthFlow` constructs a `Builder` and calls `builder.connected(appKey)` with the persisted key. Returns an `Sdk` if valid, `undefined` to fall back to `connect`.
 
-**Persistence**: Zustand `persist` middleware writes to `localStorage` under `sia-auth-<first-16-of-APP_KEY>` (keyed by app so two scaffolds on `localhost:5173` don't collide). Persisted: `storedKeyHex`, `indexerUrl`. The live `Sdk` is **not** persisted — it's rehydrated by calling `builder.connected(appKey)` on mount.
+**Persistence**: Zustand `persist` middleware writes to `localStorage` under `sia-auth-<first-16-of-APP_KEY>` (keyed by app so different scaffolds served from `localhost:5173` don't share a session). Persisted: `storedKeyHex`, `indexerUrl`. The live `Sdk` is **not** persisted — it's rehydrated by calling `builder.connected(appKey)` on mount.
 
 ## Key files
 
@@ -249,7 +249,10 @@ bun run fmt     # oxfmt, rewrites files
 bun run lint    # oxlint
 bun run typecheck
 bun run check   # format check + lint + typecheck
-bun x playwright test e2e/smoke.spec.ts   # App-loads-without-errors smoke
+bun run e2e:install  # once per machine, downloads Chromium
+bun run e2e     # Playwright smoke test against the production build
 ```
 
-After any substantive change, run `bun run fmt`, then `bun run check` and `bun run build` before committing.
+After any substantive change, run `bun run fmt`, then `bun run check`, `bun run build`, and `bun run e2e` before committing.
+
+Installs skip package versions published in the last three days (`bunfig.toml`), except `@siafoundation/sia-storage`. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.

@@ -11,7 +11,9 @@
     "fmt:check": "oxfmt --check",
     "lint": "oxlint --deny-warnings",
     "typecheck": "tsc -b",
-    "check": "oxfmt --check && oxlint --deny-warnings && tsc -b"
+    "check": "oxfmt --check && oxlint --deny-warnings && tsc -b",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@siafoundation/sia-storage": "0.0.14",
