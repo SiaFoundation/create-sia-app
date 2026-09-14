@@ -121,6 +121,10 @@ export async function scaffold(options: ScaffoldOptions) {
 
   try {
     execSync(`${pm} install`, { cwd: targetDir, stdio: 'ignore' })
+    // Substituted values such as the 64-character app key or a long
+    // description can push a line past the formatter's width, which would
+    // fail the new app's own `check` before the user has changed anything.
+    execSync(`${pm} run fmt`, { cwd: targetDir, stdio: 'ignore' })
     spinner.stop('Project created successfully')
   } catch {
     spinner.stop('Project created (install failed — run manually)')

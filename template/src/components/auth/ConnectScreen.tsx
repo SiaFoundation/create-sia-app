@@ -1,13 +1,14 @@
 import { Builder } from '@siafoundation/sia-storage'
 import { useState } from 'react'
+
 import { APP_META, DEFAULT_INDEXER_URL } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
 
 export function ConnectScreen({
-  builder,
+  onBuilder,
 }: {
-  builder: React.RefObject<Builder | null>
+  onBuilder: (builder: Builder) => void
 }) {
   const { indexerUrl, setIndexerUrl, setStep, setError, setApprovalUrl } =
     useAuthStore()
@@ -19,7 +20,7 @@ export function ConnectScreen({
     setError(null)
     try {
       const b = new Builder(url, APP_META)
-      builder.current = b
+      onBuilder(b)
       setIndexerUrl(url)
 
       try {

@@ -1,6 +1,5 @@
 import type { AppMetadata } from '@siafoundation/sia-storage'
 
-// biome-ignore format: long hex literal
 export const APP_KEY = '{{APP_KEY}}'
 export const APP_NAME = '{{APP_NAME}}'
 export const DEFAULT_INDEXER_URL = '{{INDEXER_URL}}'
