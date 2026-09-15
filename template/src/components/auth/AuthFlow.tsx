@@ -1,6 +1,7 @@
 import { AppKey, Builder, initSia } from '@siafoundation/sia-storage'
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
+import { errorMessage } from '../../lib/connection'
 import { APP_META } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { ApproveScreen } from './ApproveScreen'
@@ -10,9 +11,9 @@ import { RecoveryScreen } from './RecoveryScreen'
 
 export function AuthFlow() {
   const step = useAuthStore((s) => s.step)
-  const error = useAuthStore((s) => s.error)
-  const setError = useAuthStore((s) => s.setError)
-  const builderRef = useRef<Builder | null>(null)
+  const startOver = useAuthStore((s) => s.startOver)
+  const [attempt, setAttempt] = useState(0)
+  const [reconnectError, setReconnectError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -39,7 +40,15 @@ export function AuthFlow() {
           setStep('connect')
         }
       } catch (e) {
-        if (!cancelled) {
+        if (cancelled) return
+        // A saved key means this user has already connected. A network error
+        // here would otherwise send them through a new approval for an account
+        // that exists, so offer a retry instead.
+        if (storedKeyHex) {
+          setReconnectError(
+            `Could not reach the indexer to reconnect: ${errorMessage(e)}.`,
+          )
+        } else {
           console.error('Init error:', e)
           setStep('connect')
         }
@@ -50,33 +59,46 @@ export function AuthFlow() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [attempt])
 
   return (
     <div className="flex-1 flex flex-col">
-      {error && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm max-w-md text-center shadow-sm">
-          {error}
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            className="ml-2 text-red-600 hover:text-red-900"
-          >
-            Dismiss
-          </button>
+      {step === 'loading' && !reconnectError && <LoadingScreen />}
+      {step === 'loading' && reconnectError && (
+        <div className="flex flex-col items-center justify-center flex-1 px-4">
+          <div className="w-full max-w-md space-y-4">
+            <div
+              role="alert"
+              className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"
+            >
+              {reconnectError}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setReconnectError(null)
+                setAttempt((n) => n + 1)
+              }}
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setReconnectError(null)
+                startOver()
+              }}
+              className="w-full py-2 text-neutral-500 hover:text-neutral-900 text-sm transition-colors"
+            >
+              Connect again
+            </button>
+          </div>
         </div>
       )}
-
-      {step === 'loading' && <LoadingScreen />}
-      {step === 'connect' && (
-        <ConnectScreen
-          onBuilder={(builder) => {
-            builderRef.current = builder
-          }}
-        />
-      )}
-      {step === 'approve' && <ApproveScreen builder={builderRef} />}
-      {step === 'recovery' && <RecoveryScreen builder={builderRef} />}
+      {step === 'connect' && <ConnectScreen />}
+      {step === 'approve' && <ApproveScreen />}
+      {step === 'recovery' && <RecoveryScreen />}
     </div>
   )
 }

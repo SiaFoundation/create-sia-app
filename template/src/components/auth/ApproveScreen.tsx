@@ -1,62 +1,32 @@
-import type { Builder } from '@siafoundation/sia-storage'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
+import { errorMessage, requestConnection } from '../../lib/connection'
 import { useAuthStore } from '../../stores/auth'
 import { CopyButton } from '../CopyButton'
 import { DevNote } from '../DevNote'
 
-export function ApproveScreen({
-  builder,
-}: {
-  builder: React.RefObject<Builder | null>
-}) {
-  const { approvalUrl, setStep, setError } = useAuthStore()
-  const [polling, setPolling] = useState(true)
-  const [pollError, setPollError] = useState(false)
-  const [manualChecking, setManualChecking] = useState(false)
-  const pollStarted = useRef(false)
+export function ApproveScreen() {
+  const builder = useAuthStore((s) => s.builder)
+  const approvalUrl = useAuthStore((s) => s.approvalUrl)
+  const approvalError = useAuthStore((s) => s.approvalError)
+  const indexerUrl = useAuthStore((s) => s.indexerUrl)
+  const startApproval = useAuthStore((s) => s.startApproval)
+  const startOver = useAuthStore((s) => s.startOver)
+  const [requestError, setRequestError] = useState<string | null>(null)
+  const [requesting, setRequesting] = useState(false)
 
-  useEffect(() => {
-    // Guard against React strict mode double-mount — waitForApproval()
-    // consumes the builder's state and cannot be called twice.
-    if (pollStarted.current) return
-    pollStarted.current = true
+  const error = requestError ?? approvalError
 
-    async function poll() {
-      const b = builder.current
-      if (!b) return
-
-      try {
-        await b.waitForApproval()
-        setStep('recovery')
-      } catch {
-        setPolling(false)
-        setPollError(true)
-      }
-    }
-
-    poll()
-  }, [builder, setStep])
-
-  async function handleManualCheck() {
-    const b = builder.current
-    if (!b) {
-      setError('No builder instance')
-      return
-    }
-
-    setManualChecking(true)
-    setPollError(false)
-    setPolling(true)
+  async function handleNewLink() {
+    setRequesting(true)
+    setRequestError(null)
     try {
-      await b.waitForApproval()
-      setStep('recovery')
+      const next = await requestConnection(indexerUrl)
+      if (useAuthStore.getState().builder === builder) startApproval(next)
     } catch (e) {
-      setPolling(false)
-      setPollError(true)
-      setError(e instanceof Error ? e.message : 'Approval check failed')
+      setRequestError(`Could not request a new link: ${errorMessage(e)}.`)
     } finally {
-      setManualChecking(false)
+      setRequesting(false)
     }
   }
 
@@ -78,58 +48,67 @@ export function ApproveScreen({
             indexer&apos;s dashboard) to authorize your app. This is an
             out-of-band step — your app polls for approval via{' '}
             <code className="text-amber-700">builder.waitForApproval()</code>.
-            Once approved, the flow continues to recovery phrase setup.
+            If the request is denied or polling fails, that Builder cannot be
+            used again, so the app requests a new link.
           </p>
         </DevNote>
 
-        {approvalUrl && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-white border border-neutral-300 rounded-lg">
-              <span className="flex-1 text-sm font-mono text-neutral-600 truncate">
-                {approvalUrl}
-              </span>
-              <CopyButton value={approvalUrl} label="URL copied" />
+        {error ? (
+          <div
+            role="alert"
+            className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"
+          >
+            {error} Request a new link to try again.
+          </div>
+        ) : (
+          approvalUrl && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-white border border-neutral-300 rounded-lg">
+                <span className="flex-1 text-sm font-mono text-neutral-600 truncate">
+                  {approvalUrl}
+                </span>
+                <CopyButton value={approvalUrl} label="URL copied" />
+              </div>
+              <a
+                href={approvalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Open Link
+              </a>
             </div>
-            <a
-              href={approvalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Open Link
-            </a>
+          )
+        )}
+
+        {error && (
+          <button
+            type="button"
+            onClick={handleNewLink}
+            disabled={requesting}
+            className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white font-medium rounded-lg transition-colors"
+          >
+            {requesting ? 'Requesting...' : 'Request new link'}
+          </button>
+        )}
+
+        {!error && (
+          <div className="flex items-center justify-center gap-2 text-xs text-neutral-500">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-600" />
+            </span>
+            Polling for approval...
           </div>
         )}
 
         <button
           type="button"
-          onClick={handleManualCheck}
-          disabled={manualChecking}
-          className="w-full py-3 bg-neutral-100 hover:bg-neutral-200 disabled:bg-neutral-200 disabled:text-neutral-400 text-neutral-900 font-medium rounded-lg transition-colors"
+          onClick={startOver}
+          className="w-full py-2 text-neutral-500 hover:text-neutral-900 text-sm transition-colors"
         >
-          {manualChecking ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
-              Checking...
-            </span>
-          ) : (
-            'Check Approval'
-          )}
+          Back
         </button>
-
-        <div className="flex items-center justify-center gap-2 text-xs text-neutral-500">
-          {polling ? (
-            <>
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-600" />
-              </span>
-              Polling for approval...
-            </>
-          ) : pollError ? (
-            <span>Auto-polling stopped</span>
-          ) : null}
-        </div>
       </div>
     </div>
   )
