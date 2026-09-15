@@ -9,7 +9,9 @@ import type { Page, Route } from '@playwright/test'
  * status, and register URLs plus an expiry. A denied or expired request answers
  * status checks with 404. Registration returns 204, or 403 "key has no
  * remaining uses" when the account has no app connections left. `/auth/check`
- * returns 204 for a known user key and 401 otherwise. After connecting, the SDK
+ * returns 204 for a registered user key and 401 otherwise. An approved status
+ * reports `reconnecting` once any user key has registered, as it does for a
+ * connect key that already has an account for the app. After connecting, the SDK
  * and the upload screen read `/hosts` and `/objects`, answered with empty
  * lists. Connect bodies must carry the four required fields; request
  * signatures are not checked.
@@ -31,9 +33,6 @@ type Options = {
   nextRequestExpired: boolean
   // The account has no app connections left, so registration is refused.
   outOfConnections: boolean
-  // Whether `/auth/check` recognises the saved user key. A successful
-  // registration sets it.
-  knownUserKey: boolean
   // Simulated outages: the request fails at the network level.
   connectDown: boolean
   statusDown: boolean
@@ -45,7 +44,6 @@ export async function fakeIndexer(page: Page) {
     nextApproval: 'pending',
     nextRequestExpired: false,
     outOfConnections: false,
-    knownUserKey: false,
     connectDown: false,
     statusDown: false,
     authCheckDown: false,
@@ -53,6 +51,8 @@ export async function fakeIndexer(page: Page) {
   const requestIds: string[] = []
   const approvals = new Map<string, Approval>()
   const statusChecks = new Map<string, number>()
+  // Hex public keys of the user keys that have registered.
+  const registeredKeys = new Set<string>()
   let registrations = 0
   let authChecks = 0
 
@@ -95,7 +95,7 @@ export async function fakeIndexer(page: Page) {
       case 'approved':
         return json(route, {
           approved: true,
-          reconnecting: false,
+          reconnecting: registeredKeys.size > 0,
           userSecret: 'ab'.repeat(32),
         })
       default:
@@ -107,15 +107,19 @@ export async function fakeIndexer(page: Page) {
     if (options.outOfConnections) {
       return fail(route, 403, 'key has no remaining uses')
     }
+    const body = JSON.parse(route.request().postData() ?? '{}')
+    registeredKeys.add(String(body.appKey).replace(/^ed25519:/, ''))
     registrations++
-    options.knownUserKey = true
     return route.fulfill({ status: 204 })
   }
 
   function check(route: Route) {
     authChecks++
     if (options.authCheckDown) return route.abort('connectionfailed')
-    return options.knownUserKey
+    // The request is signed by the user key; `sc` is its public key.
+    const signer = new URL(route.request().url()).searchParams.get('sc') ?? ''
+    const key = Buffer.from(signer, 'base64url').toString('hex')
+    return registeredKeys.has(key)
       ? route.fulfill({ status: 204 })
       : fail(route, 401, 'account not found')
   }
@@ -135,6 +139,7 @@ export async function fakeIndexer(page: Page) {
   return {
     options,
     approvals,
+    registeredKeys,
     requestIds,
     statusChecks: (id: string) => statusChecks.get(id) ?? 0,
     registrations: () => registrations,

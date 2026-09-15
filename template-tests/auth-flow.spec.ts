@@ -60,6 +60,15 @@ async function signIn(page: Page, indexer: Indexer) {
   await expectSignedIn(page)
 }
 
+const EXISTING_PHRASE =
+  'glare own entire dish exact open theme family harsh room scrap rose'
+
+async function enterPhrase(page: Page, phrase: string) {
+  await page.getByRole('button', { name: 'I already have a phrase' }).click()
+  await page.getByRole('textbox').fill(phrase)
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+}
+
 function approvalLink(page: Page) {
   return page
     .getByRole('link', { name: 'Open approval link' })
@@ -81,11 +90,7 @@ test('approving the request leads through the recovery phrase to the upload scre
 test('an existing phrase registers the same way', async ({ page, indexer }) => {
   indexer.options.nextApproval = 'approved'
   await connect(page)
-  await page.getByRole('button', { name: 'I already have a phrase' }).click()
-  await page
-    .getByRole('textbox')
-    .fill('glare own entire dish exact open theme family harsh room scrap rose')
-  await page.getByRole('button', { name: 'Complete setup' }).click()
+  await enterPhrase(page, EXISTING_PHRASE)
 
   await expectSignedIn(page)
   expect(indexer.registrations()).toBe(1)
@@ -133,14 +138,15 @@ test('a key the indexer no longer knows is forgotten', async ({
 }) => {
   await signIn(page, indexer)
 
-  indexer.options.knownUserKey = false
+  const keys = [...indexer.registeredKeys]
+  indexer.registeredKeys.clear()
   await page.reload()
   await expectConnectScreen(page)
   await expect(page.getByRole('alert')).toBeHidden()
   expect(indexer.requestIds).toHaveLength(1)
 
   // The key is gone, so the next load does not ask the indexer again.
-  indexer.options.knownUserKey = true
+  for (const key of keys) indexer.registeredKeys.add(key)
   await page.reload()
   await expectConnectScreen(page)
 })
@@ -276,6 +282,54 @@ test('when the account has no connections left, setup explains and offers a fres
 
   await page.getByRole('button', { name: 'Start over' }).click()
   await expectConnectScreen(page)
+})
+
+test('a returning account is asked for its phrase first and gets it back', async ({
+  page,
+  indexer,
+}) => {
+  indexer.options.nextApproval = 'approved'
+  await connect(page)
+  await enterPhrase(page, EXISTING_PHRASE)
+  await expectSignedIn(page)
+  await page.getByRole('button', { name: 'Sign out' }).click()
+
+  await connect(page)
+  await expect(page.getByText('has used this app before')).toBeVisible()
+  const choices = page.getByRole('button', { name: /phrase/ })
+  await expect(choices.first()).toHaveText('I already have a phrase')
+  await enterPhrase(page, EXISTING_PHRASE)
+
+  await expectSignedIn(page)
+  expect(indexer.registeredKeys.size).toBe(1)
+})
+
+test('a phrase that does not match a returning account asks before creating a new one', async ({
+  page,
+  indexer,
+}) => {
+  await signIn(page, indexer)
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await connect(page)
+  const registrations = indexer.registrations()
+
+  await page.getByRole('button', { name: 'Generate a new phrase' }).click()
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'This phrase starts a new account' }),
+  ).toBeVisible()
+  expect(indexer.registrations()).toBe(registrations)
+
+  await page.getByRole('button', { name: 'Use a different phrase' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Recovery phrase' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Generate a new phrase' }).click()
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+  await page.getByRole('button', { name: 'Create a new account' }).click()
+
+  await expectSignedIn(page)
+  expect(indexer.registeredKeys.size).toBe(2)
 })
 
 test('a corrupt saved key is forgotten instead of reported', async ({
