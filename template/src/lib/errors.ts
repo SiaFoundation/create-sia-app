@@ -1,6 +1,6 @@
 // Turns SDK and indexer failures into sentences for the connection screens.
-// The SDK's own message stays at the end of each one: it names the HTTP or
-// CORS problem, which is what a developer needs while setting up.
+// Where the SDK's own message names the HTTP or CORS problem, it stays at the
+// end of the sentence, which is what a developer needs while setting up.
 
 export function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error)
@@ -16,16 +16,15 @@ export function describeApprovalError(error: unknown) {
     message.includes('user rejected') ||
     message.includes('request expired')
   ) {
-    return 'The approval link was denied or has expired.'
+    return 'The connection request was denied or has expired.'
   }
   return `Lost contact with the indexer while waiting for approval. ${message}.`
 }
 
 export function describeRegisterError(error: unknown) {
   const message = errorMessage(error)
-  // The indexer's error when the account has no app connections left.
   if (message.includes('key has no remaining uses')) {
-    return 'This account has no app connections left. Remove an app from the account on the indexer, or upgrade its plan, then start over.'
+    return "This account has reached its limit of connected apps. Remove one on the indexer's site, then start over."
   }
   return `Could not finish setting up the account. ${message}.`
 }

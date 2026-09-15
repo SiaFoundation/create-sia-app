@@ -12,17 +12,21 @@ import {
 /**
  * The connection flow, one step at a time:
  *
- *   loading    the page loads the SDK and, for a returning user, reconnects
- *   connect    the user picks an indexer and the app requests a connection
- *   approve    the user approves the request in another tab; the app waits
- *   recovery   the user creates or enters a recovery phrase to register
- *   connected  the Sdk is ready and the app renders
+ *   loading      the page loads the SDK and, for a returning user, reconnects;
+ *                a failed reconnect stays here with `error` set, and the
+ *                loading screen offers Reload and Start over
+ *   unavailable  the SDK failed to load; only a page reload can recover
+ *   connect      the user picks an indexer and the app requests a connection
+ *   approve      the user approves the request in another tab; the app waits
+ *   recovery     the user creates or enters a recovery phrase to register
+ *   connected    the Sdk is ready and the app renders
  *
  * Every step but `connected` can fail. The failure is kept in `error` for that
  * step, and `startOver` returns to `connect` with a clean slate.
  */
 export type AuthStep =
   | 'loading'
+  | 'unavailable'
   | 'connect'
   | 'approve'
   | 'recovery'
@@ -47,7 +51,7 @@ type AuthState = {
   // True while an action is talking to the indexer. Buttons disable on it, and
   // actions refuse to start, so nothing runs twice.
   busy: boolean
-  // Why the current step failed. Cleared whenever the step changes.
+  // Why the current step failed.
   error: string | null
 
   reconnect: () => Promise<void>
@@ -60,7 +64,7 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => {
-      function finish(sdk: Sdk) {
+      function setConnected(sdk: Sdk) {
         set({
           sdk,
           userKeyHex: sdk.appKey().export().toHex(),
@@ -90,21 +94,29 @@ export const useAuthStore = create<AuthState>()(
             // initSia remembers a failed load, so only a reload can recover.
             set({
               busy: false,
-              error: `Could not load the Sia storage engine. Reload the page to try again. ${errorMessage(e)}.`,
+              step: 'unavailable',
+              error: `Could not load the Sia storage engine. ${errorMessage(e)}.`,
             })
             return
           }
 
           const { userKeyHex, indexerUrl } = get()
-          if (!userKeyHex || !indexerUrl) {
+          if (!userKeyHex) {
+            set({ busy: false, step: 'connect' })
+            return
+          }
+          let key: AppKey
+          try {
+            key = new AppKey(Uint8Array.fromHex(userKeyHex))
+          } catch {
+            // Not a key this app wrote, so there is nothing to reconnect with.
             set({ busy: false, userKeyHex: null, step: 'connect' })
             return
           }
           try {
-            const key = new AppKey(Uint8Array.fromHex(userKeyHex))
             const sdk = await new Builder(indexerUrl, APP_META).connected(key)
             if (sdk) {
-              finish(sdk)
+              setConnected(sdk)
             } else {
               // The indexer no longer knows this key, so it is no use keeping.
               set({ userKeyHex: null, step: 'connect' })
@@ -146,7 +158,7 @@ export const useAuthStore = create<AuthState>()(
             )
           } catch (e) {
             set({
-              error: `Could not reach the indexer at ${indexerUrl}. Check the address and that it allows requests from this origin. ${errorMessage(e)}.`,
+              error: `Could not reach the indexer at ${indexerUrl}. Check the address. ${errorMessage(e)}.`,
             })
           } finally {
             set({ busy: false })
@@ -158,7 +170,7 @@ export const useAuthStore = create<AuthState>()(
           if (busy || !request) return
           set({ busy: true })
           try {
-            finish(await request.register(phrase))
+            setConnected(await request.register(phrase))
           } catch (e) {
             set({ error: describeRegisterError(e) })
           } finally {

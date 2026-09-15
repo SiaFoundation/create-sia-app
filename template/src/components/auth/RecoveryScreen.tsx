@@ -78,7 +78,9 @@ export function RecoveryScreen() {
   return (
     <AuthCard
       title={
-        mode === 'generate' ? 'Save your recovery phrase' : 'Enter your phrase'
+        mode === 'generate'
+          ? 'Save your recovery phrase'
+          : 'Enter your recovery phrase'
       }
       description={
         mode === 'generate'

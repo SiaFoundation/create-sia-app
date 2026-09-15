@@ -1,12 +1,6 @@
 import { useToastStore } from '../stores/toast'
 
-export function CopyButton({
-  value,
-  label = 'Copied to clipboard',
-}: {
-  value: string
-  label?: string
-}) {
+export function CopyButton({ value, label }: { value: string; label: string }) {
   const addToast = useToastStore((s) => s.addToast)
 
   return (

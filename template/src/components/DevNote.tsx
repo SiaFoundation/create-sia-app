@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
 
+// The amber callouts that explain the starter to whoever reads it. Remove them
+// when the app ships.
+
 export function DevNote({
   title,
   children,
