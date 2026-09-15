@@ -1,211 +1,306 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, test as base } from '@playwright/test'
 
 import { fakeIndexer, INDEXER_URL } from './fake-indexer'
 
-// Long enough for one approval poll by the SDK, which runs every few seconds.
-const POLL = { timeout: 15_000 }
+// Long enough for the SDK's next approval check, which runs every 5 seconds,
+// or for a page load that fetches the WASM module.
+const WAIT = { timeout: 15_000 }
 
-async function connect(page: Page) {
-  await page.getByRole('textbox').fill(INDEXER_URL)
-  await page.getByRole('button', { name: 'Connect' }).click()
-}
+// Every test gets its own fake indexer, installed before the first page load,
+// and fails on any console error or uncaught exception. Chrome logs one line
+// per failed HTTP request, which the failure tests cause on purpose.
+const test = base.extend<{ indexer: Awaited<ReturnType<typeof fakeIndexer>> }>({
+  indexer: async ({ page }, provide) => {
+    const errors: string[] = []
+    page.on('console', (msg) => {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().startsWith('Failed to load resource')
+      ) {
+        errors.push(msg.text())
+      }
+    })
+    page.on('pageerror', (err) => errors.push(err.message))
+    const indexer = await fakeIndexer(page)
+    await page.goto('/')
+    await provide(indexer)
+    expect(errors).toEqual([])
+  },
+})
 
-async function approvalLink(page: Page) {
-  return page.getByRole('link', { name: 'Open Link' }).getAttribute('href')
+function connect(page: Page) {
+  return page.getByRole('button', { name: 'Connect' }).click()
 }
 
 async function completeSetup(page: Page) {
-  await page.getByRole('button', { name: 'Generate New Phrase' }).click()
-  await page.getByRole('button', { name: 'Complete Setup' }).click()
+  await page.getByRole('button', { name: 'Generate a new phrase' }).click(WAIT)
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
 }
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+async function approvalLink(page: Page) {
+  return page
+    .getByRole('link', { name: 'Open approval link' })
+    .getAttribute('href')
+}
+
+test.beforeEach(async ({ page, indexer }) => {
+  expect(indexer.requestIds).toHaveLength(0)
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
+  await page.getByRole('textbox').fill(INDEXER_URL)
 })
 
 test('approving the request leads through the recovery phrase to the upload screen', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'approved'
-
+  indexer.options.nextApproval = 'approved'
   await connect(page)
-  await expect(
-    page.getByRole('heading', { name: 'Recovery Phrase' }),
-  ).toBeVisible(POLL)
   await completeSetup(page)
 
   await expect(
     page.getByText('Drop files here or click to browse'),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible()
-  expect(indexer.state.registrations).toBe(1)
+  expect(indexer.registrations()).toBe(1)
 })
 
-test('a returning user reconnects on reload and signing out returns to connect', async ({
+test('an existing phrase registers the same way', async ({ page, indexer }) => {
+  indexer.options.nextApproval = 'approved'
+  await connect(page)
+  await page
+    .getByRole('button', { name: 'I already have a phrase' })
+    .click(WAIT)
+  await page
+    .getByRole('textbox')
+    .fill('glare own entire dish exact open theme family harsh room scrap rose')
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  expect(indexer.registrations()).toBe(1)
+})
+
+test('an invalid phrase is refused before anything is sent', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'approved'
+  indexer.options.nextApproval = 'approved'
+  await connect(page)
+  await page
+    .getByRole('button', { name: 'I already have a phrase' })
+    .click(WAIT)
+  await page.getByRole('textbox').fill('not a real recovery phrase at all')
+  await page.getByRole('button', { name: 'Complete setup' }).click()
+
+  await expect(page.getByText('not a valid 12-word phrase')).toBeVisible()
+  await expect(page.getByRole('alert')).toBeHidden()
+  await expect(
+    page.getByRole('button', { name: 'Complete setup' }),
+  ).toBeEnabled()
+  expect(indexer.registrations()).toBe(0)
+})
+
+test('a returning user reconnects on reload, and signing out forgets the key', async ({
+  page,
+  indexer,
+}) => {
+  indexer.options.nextApproval = 'approved'
   await connect(page)
   await completeSetup(page)
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible(POLL)
 
   await page.reload()
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible(WAIT)
+  expect(indexer.requestIds).toHaveLength(1)
+  // One check even under StrictMode, which mounts the flow twice in dev.
+  expect(indexer.authChecks()).toBe(1)
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
+})
+
+test('a key the indexer no longer knows is dropped quietly', async ({
+  page,
+  indexer,
+}) => {
+  indexer.options.nextApproval = 'approved'
+  await connect(page)
+  await completeSetup(page)
+
+  indexer.options.knownUserKey = false
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
+  await expect(page.getByRole('alert')).toBeHidden()
   expect(indexer.requestIds).toHaveLength(1)
 
-  await page.getByRole('button', { name: 'Sign Out' }).click()
+  // The key is forgotten, so the next load does not ask the indexer again.
+  indexer.options.knownUserKey = true
+  await page.reload()
   await expect(
-    page.getByRole('heading', { name: 'Connect to Indexer' }),
-  ).toBeVisible()
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
 })
 
-test('a failed reconnect offers a retry instead of a new connection', async ({
+test('a failed reconnect offers a reload or a fresh start', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'approved'
+  indexer.options.nextApproval = 'approved'
   await connect(page)
   await completeSetup(page)
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible(POLL)
 
-  indexer.state.checkFails = true
+  indexer.options.checkDown = true
   await page.reload()
   await expect(page.getByRole('alert')).toContainText(
-    'Could not reach the indexer to reconnect',
+    'Could not reconnect',
+    WAIT,
   )
+  expect(indexer.requestIds).toHaveLength(1)
 
-  indexer.state.checkFails = false
-  await page.getByRole('button', { name: 'Retry' }).click()
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible()
-})
-
-test('a failed connection is shown on the connect screen and can be retried', async ({
-  page,
-}) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.connectFails = true
-
-  await connect(page)
-  await expect(page.getByRole('alert')).toContainText('Connection failed')
+  await page.getByRole('button', { name: 'Start over' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Connect to Indexer' }),
+    page.getByRole('heading', { name: 'Connect to Sia' }),
   ).toBeVisible()
-
-  indexer.state.connectFails = false
-  await page.getByRole('button', { name: 'Connect' }).click()
-  await expect(page.getByText('Polling for approval')).toBeVisible()
+  // Starting over forgets the key, so a reload does not retry the reconnect.
+  await page.reload()
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible(WAIT)
   await expect(page.getByRole('alert')).toBeHidden()
 })
 
-test('a denied or expired request offers a new link', async ({ page }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'rejected'
+test('a failed connection request is shown and can be retried', async ({
+  page,
+  indexer,
+}) => {
+  indexer.options.connectDown = true
+  await connect(page)
+  await expect(page.getByRole('alert')).toContainText(
+    'Could not reach the indexer',
+  )
+  await expect(
+    page.getByRole('heading', { name: 'Connect to Sia' }),
+  ).toBeVisible()
 
+  indexer.options.connectDown = false
+  await connect(page)
+  await expect(page.getByText('Waiting for approval')).toBeVisible()
+  await expect(page.getByRole('alert')).toBeHidden()
+})
+
+test('a denied request offers a new link', async ({ page, indexer }) => {
+  indexer.options.nextApproval = 'denied'
   await connect(page)
   await expect(page.getByRole('alert')).toContainText(
     'denied or has expired',
-    POLL,
+    WAIT,
   )
-  await expect(page.getByRole('link', { name: 'Open Link' })).toBeHidden()
+  await expect(
+    page.getByRole('link', { name: 'Open approval link' }),
+  ).toBeHidden()
 
-  indexer.state.nextApproval = 'pending'
-  await page.getByRole('button', { name: 'Request new link' }).click()
-  await expect(page.getByText('Polling for approval')).toBeVisible()
+  indexer.options.nextApproval = 'pending'
+  await page.getByRole('button', { name: 'Request a new link' }).click()
+  await expect(page.getByText('Waiting for approval')).toBeVisible()
   await expect(page.getByRole('alert')).toBeHidden()
   expect(await approvalLink(page)).toContain(indexer.requestIds[1])
 })
 
-test('a failed approval check offers a new link or a way back', async ({
+test('an expired request is reported the same way as a denied one', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'unreachable'
-
+  indexer.options.nextRequestExpired = true
   await connect(page)
   await expect(page.getByRole('alert')).toContainText(
-    'Stopped waiting for approval',
-    POLL,
+    'denied or has expired',
+    WAIT,
   )
+})
 
-  indexer.state.connectFails = true
-  await page.getByRole('button', { name: 'Request new link' }).click()
+test('a failed status check offers a new link or a fresh start', async ({
+  page,
+  indexer,
+}) => {
+  indexer.options.statusDown = true
+  await connect(page)
   await expect(page.getByRole('alert')).toContainText(
-    'Could not request a new link',
+    'Lost contact with the indexer',
+    WAIT,
   )
 
-  await page.getByRole('button', { name: 'Back' }).click()
+  indexer.options.connectDown = true
+  await page.getByRole('button', { name: 'Request a new link' }).click()
+  await expect(page.getByRole('alert')).toContainText(
+    'Could not reach the indexer',
+  )
+
+  await page.getByRole('button', { name: 'Start over' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Connect to Indexer' }),
+    page.getByRole('heading', { name: 'Connect to Sia' }),
   ).toBeVisible()
   await expect(page.getByRole('alert')).toBeHidden()
 })
 
 test('an approval for an abandoned request does not move the flow', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-
   await connect(page)
-  await expect(page.getByText('Polling for approval')).toBeVisible()
-  await page.getByRole('button', { name: 'Back' }).click()
-  await page.getByRole('button', { name: 'Connect' }).click()
-  await expect(page.getByText('Polling for approval')).toBeVisible()
-
-  const [abandoned, current] = indexer.requestIds
+  await expect(page.getByText('Waiting for approval')).toBeVisible()
+  await page.getByRole('button', { name: 'Start over' }).click()
+  await page.getByRole('textbox').fill(INDEXER_URL)
+  await connect(page)
+  await expect(page.getByText('Waiting for approval')).toBeVisible()
+  expect(indexer.requestIds).toHaveLength(2)
+  const [abandoned, current] = indexer.requestIds as [string, string]
   expect(await approvalLink(page)).toContain(current)
 
-  // The SDK cannot cancel polling, so the abandoned request keeps being
-  // checked. Approve it and wait for the next check to pick that up.
-  const checksBefore = indexer.statusChecks(abandoned ?? '')
-  indexer.setApproval(abandoned ?? '', 'approved')
+  // The SDK cannot cancel a wait, so the abandoned request is still being
+  // checked. Approve it, then wait until the SDK has seen that and the current
+  // request has been checked again after it.
+  indexer.approvals.set(abandoned, 'approved')
+  const seen = indexer.statusChecks(abandoned)
   await expect
-    .poll(() => indexer.statusChecks(abandoned ?? ''), POLL)
-    .toBeGreaterThan(checksBefore)
-  await page.waitForTimeout(500)
+    .poll(() => indexer.statusChecks(abandoned), WAIT)
+    .toBeGreaterThan(seen)
+  const currentSeen = indexer.statusChecks(current)
+  await expect
+    .poll(() => indexer.statusChecks(current), WAIT)
+    .toBeGreaterThan(currentSeen)
 
   await expect(
-    page.getByRole('heading', { name: 'Approve Connection' }),
+    page.getByRole('heading', { name: 'Approve the connection' }),
   ).toBeVisible()
-  await expect(page.getByText('Polling for approval')).toBeVisible()
+  await expect(page.getByText('Waiting for approval')).toBeVisible()
 })
 
-test('an invalid recovery phrase is rejected before registering', async ({
+test('when the account has no connections left, setup explains and offers a fresh start', async ({
   page,
+  indexer,
 }) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'approved'
-
+  indexer.options.nextApproval = 'approved'
+  indexer.options.outOfConnections = true
   await connect(page)
-  await page.getByRole('button', { name: 'Enter Existing Phrase' }).click(POLL)
-  await page.getByRole('textbox').fill('not a real recovery phrase at all')
-  await page.getByRole('button', { name: 'Complete Setup' }).click()
+  await page.getByRole('button', { name: 'Generate a new phrase' }).click(WAIT)
+  await page.getByRole('button', { name: 'Complete setup' }).click()
 
-  await expect(page.getByText('Invalid recovery phrase')).toBeVisible()
-  expect(indexer.state.registrations).toBe(0)
-})
-
-test('a registration error explains the problem and starting over returns to connect', async ({
-  page,
-}) => {
-  const indexer = await fakeIndexer(page)
-  indexer.state.nextApproval = 'approved'
-  indexer.state.keyExhausted = true
-
-  await connect(page)
-  await page.getByRole('button', { name: 'Generate New Phrase' }).click(POLL)
-  await page.getByRole('button', { name: 'Complete Setup' }).click()
-
-  await expect(page.getByRole('alert')).toContainText(
-    'used all of its app connections',
-  )
+  await expect(page.getByRole('alert')).toContainText('no app connections left')
   await expect(
-    page.getByRole('button', { name: 'Complete Setup' }),
+    page.getByRole('button', { name: 'Complete setup' }),
   ).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Back' })).toBeHidden()
 
   await page.getByRole('button', { name: 'Start over' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Connect to Indexer' }),
+    page.getByRole('heading', { name: 'Connect to Sia' }),
   ).toBeVisible()
 })

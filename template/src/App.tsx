@@ -1,6 +1,6 @@
 import { AuthFlow } from './components/auth/AuthFlow'
 import { Navbar } from './components/Navbar'
-import { Toasts } from './components/Toast'
+import { Toasts } from './components/Toasts'
 import { UploadZone } from './components/upload/UploadZone'
 import { useAuthStore } from './stores/auth'
 

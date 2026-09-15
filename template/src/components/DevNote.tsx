@@ -13,7 +13,7 @@ export function DevNote({
         Developer Note
       </p>
       <p className="text-amber-900 text-sm font-medium">{title}</p>
-      <div className="text-amber-900/80 text-xs leading-relaxed">
+      <div className="text-amber-900/80 text-xs leading-relaxed [&_code]:text-amber-700">
         {children}
       </div>
     </div>

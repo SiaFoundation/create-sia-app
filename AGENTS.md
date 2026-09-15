@@ -18,7 +18,7 @@ generated app. Keep notes about this repo out of it.
 The CLI copies every file in `template/` except `node_modules`, `dist`, `.git`,
 and `CLAUDE.md`, and makes these changes on the way:
 
-- `{{APP_NAME}}`, `{{APP_KEY}}`, `{{INDEXER_URL}}`, and `{{APP_DESCRIPTION}}`
+- `{{APP_NAME}}`, `{{APP_ID}}`, `{{INDEXER_URL}}`, and `{{APP_DESCRIPTION}}`
   are replaced in every text file. The indexer URL and description are escaped
   for single-quoted strings, so only place those two inside single quotes.
 - `_gitignore` becomes `.gitignore`. npm leaves `.gitignore` files out of the
@@ -59,7 +59,7 @@ publishing. The CLI supports Node.js 22.12 and newer.
 
 The template's Playwright tests run inside the scaffolded app, not against
 `template/`. The auth tests construct a real `Builder`, and the SDK rejects the
-`{{APP_KEY}}` placeholder in `template/src/lib/constants.ts`. They talk to a
+`{{APP_ID}}` placeholder in `template/src/lib/constants.ts`. They talk to a
 fake indexer in `template/e2e/fake-indexer.ts`; when the indexer's auth
 responses change, update it to match.
 

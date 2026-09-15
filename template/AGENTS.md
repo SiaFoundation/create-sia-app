@@ -17,15 +17,13 @@ Don't hallucinate methods. If a method isn't in those files, it doesn't exist.
 
 ## Core concepts
 
-**Indexer** — A service that coordinates storage: it tracks which hosts hold which encrypted shards, handles payments, and repairs slabs when hosts disappear. **It sees only ciphertext.** Trusted for availability and correctness of the repair/payment flow, _not_ for data privacy. The indexer URL lives in `src/lib/constants.ts`.
+**Indexer** — A service that coordinates storage: it tracks which hosts hold which encrypted shards, handles payments, and repairs slabs when hosts disappear. **It sees only ciphertext.** Trusted for availability and correctness of the repair/payment flow, _not_ for data privacy. The user picks one on the connect screen; `DEFAULT_INDEXER_URL` in `src/lib/constants.ts` is the suggestion.
 
 **Hosts** — The actual storage providers. The browser talks to them directly over WebTransport for uploads and downloads. Erasure coding means any sufficient subset of hosts is enough to reconstruct a file.
 
-**App** — Identified to the indexer by `APP_KEY` (32-byte hex) + `APP_META` in `src/lib/constants.ts`. Apps are namespaces: objects stored under one `APP_KEY` aren't visible to another.
+**App** — Identified to the indexer by `APP_ID` (32-byte hex) + `APP_META` in `src/lib/constants.ts`. Apps are namespaces: objects stored under one `APP_ID` aren't visible to another.
 
-**User key** — An `AppKey` instance derived from the user's 12-word BIP-39 recovery phrase. It's the encryption key and the indexer-auth identity for that user _within_ the app. Persisted as hex in `localStorage` so users don't re-enter the phrase every session.
-
-> **`APP_KEY` vs `AppKey`** — `APP_KEY` (constant, screaming snake) is the _app's_ identity in `APP_META.appId`. `AppKey` (class, PascalCase) is the _user's_ ed25519 key. They are not the same thing.
+**User key** — An `AppKey` instance (the SDK's name for it) derived from the user's 12-word BIP-39 recovery phrase. It's the encryption key and the indexer-auth identity for that user _within_ the app. The store keeps it as `userKeyHex` in `localStorage`, in plain text, so users don't re-enter the phrase every session; a production app should decide its own storage.
 
 **Object** — A file or blob you upload. Represented at rest by a `PinnedObject` handle. Has an ID, a size, one or more slabs, and encrypted metadata.
 
@@ -37,38 +35,40 @@ Don't hallucinate methods. If a method isn't in those files, it doesn't exist.
 
 ## Auth flow
 
-Step-based, managed by Zustand (`src/stores/auth.ts`):
+`src/stores/auth.ts` is the whole state machine. The screens under `src/components/auth/` render its state and call its actions; none of them talk to the SDK directly.
 
 ```
 loading → connect → approve → recovery → connected
 ```
 
-- **loading** — `initSia()` loads WASM; `AuthFlow` checks for a stored user key.
-- **connect** — User enters indexer URL. `requestConnection(url)` in `src/lib/connection.ts` constructs `new Builder(url, APP_META)` and calls `requestConnection()`; `startApproval(builder)` stores the Builder and starts `builder.waitForApproval()`.
-- **approve** — User visits `builder.responseUrl()` in another tab; the app waits on `builder.waitForApproval()`. If the user denies the request or a status check fails, the screen shows the error with **Request new link** (a new Builder) and **Back** (`startOver()`, returns to connect).
-- **recovery** — User generates or enters a BIP-39 phrase; `builder.register(phrase)` returns the `Sdk`. A registration error replaces **Complete Setup** with **Start over**, since that Builder cannot register again.
-- **connected** — `Sdk` is ready; main UI renders.
+- **loading** — `reconnect()` loads the WASM with `initSia()`. With a saved `userKeyHex` it calls `new Builder(indexerUrl, APP_META).connected(key)`: an `Sdk` means `connected`, `undefined` means the indexer no longer knows the key, which is dropped, and the flow goes to `connect`. A thrown error stays on `loading` with the message, a **Reload** button, and **Start over**.
+- **connect** — The user enters an indexer URL. `connect(url)` makes a `Builder`, calls `requestConnection()`, stores it as `request`, and starts `request.waitForApproval()` right there. The result of that wait lands later and is ignored if `request` has been replaced in the meantime.
+- **approve** — The user opens `approvalUrl` in another tab. When the wait resolves the step becomes `recovery`. If it rejects (denied, expired, or a failed status check) the error is shown with **Request a new link**, which is `connect(indexerUrl)` again, and **Start over**.
+- **recovery** — The user generates or enters a phrase; `register(phrase)` calls `request.register()` and finishes with the `Sdk`. A registration error is shown with **Start over** only, because that request cannot register again.
+- **connected** — `sdk` is set and the main UI renders. **Sign out** forgets `userKeyHex` and reloads.
 
-**Returning users** skip connect/approve/recovery entirely: `AuthFlow` constructs a `Builder` and calls `builder.connected(appKey)` with the persisted key. Returns an `Sdk` if valid, `undefined` to fall back to `connect`.
+`startOver()` is the one way back from any failure: it drops the request, the saved key, and the error, and shows the connect screen. `busy` is true while an action is talking to the indexer; buttons disable on it and actions refuse to start, so nothing runs twice, including under React StrictMode's double effects in dev.
 
-**Persistence**: Zustand `persist` middleware writes to `localStorage` under `sia-auth-<first-16-of-APP_KEY>` (keyed by app so different scaffolds served from `localhost:5173` don't share a session). Persisted: `storedKeyHex`, `indexerUrl`. The live `Sdk` is **not** persisted — it's rehydrated by calling `builder.connected(appKey)` on mount.
+**Persistence**: Zustand `persist` writes `userKeyHex` and `indexerUrl` to `localStorage` under `sia-auth-<first-16-of-APP_ID>`, keyed by app so scaffolds served from the same localhost origin don't share a session. Everything else, including the live `Sdk`, is rebuilt on each page load.
 
 ## Key files
 
-| File                                     | Role                                                                                                                                        |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/constants.ts`                   | `APP_KEY`, `APP_NAME`, `APP_META` (`AppMetadata`), indexer default, erasure-coding constants                                                |
-| `src/stores/auth.ts`                     | Zustand store: holds the `Sdk` and the in-progress `Builder`, waits for approval, persists `storedKeyHex` + `indexerUrl`                    |
-| `src/lib/connection.ts`                  | `requestConnection()` and the error messages for the auth screens                                                                           |
-| `src/stores/toast.ts`                    | Toast notifications (auto-dismiss)                                                                                                          |
-| `src/components/auth/AuthFlow.tsx`       | Orchestrator: `initSia()`, returning-user reconnect                                                                                         |
-| `src/components/auth/ConnectScreen.tsx`  | `requestConnection(url)` then `startApproval(builder)`; connection errors shown inline                                                      |
-| `src/components/auth/ApproveScreen.tsx`  | Shows the approval link, or on denial or failure offers **Request new link** or **Back**                                                    |
-| `src/components/auth/RecoveryScreen.tsx` | Generate / validate phrase → `builder.register()` → `Sdk`; errors inline with **Start over**                                                |
-| `src/components/upload/UploadZone.tsx`   | **Reference implementation.** Full cycle: dropzone → upload → pin → metadata → list → download. Read this first when building new features. |
-| `src/components/Navbar.tsx`              | Public key + sign out                                                                                                                       |
-| `src/components/DevNote.tsx`             | Amber callout — remove or replace for production                                                                                            |
-| `src/types/uint8array-hex.d.ts`          | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them)                                                           |
+| File                                          | Role                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/constants.ts`                        | `APP_ID`, `APP_NAME`, `APP_META` (`AppMetadata`), default indexer, erasure-coding constants                                                 |
+| `src/lib/errors.ts`                           | Turns SDK and indexer errors into the sentences the auth screens show                                                                       |
+| `src/stores/auth.ts`                          | The connection state machine: steps, the pending request, the `Sdk`, and every action that talks to the indexer                             |
+| `src/stores/toast.ts`                         | Toast notifications (auto-dismiss)                                                                                                          |
+| `src/components/auth/AuthFlow.tsx`            | Starts `reconnect()` on mount and renders the screen for the current step                                                                   |
+| `src/components/auth/ConnectScreen.tsx`       | Indexer URL input, calls `connect(url)`                                                                                                     |
+| `src/components/auth/ApproveScreen.tsx`       | Shows the approval link while waiting; on failure offers **Request a new link** or **Start over**                                           |
+| `src/components/auth/RecoveryScreen.tsx`      | Generate or enter a phrase, calls `register(phrase)`; on failure offers **Start over**                                                      |
+| `src/components/auth/AuthCard.tsx`            | The centered layout every auth screen uses                                                                                                  |
+| `src/components/Button.tsx`, `ErrorAlert.tsx` | The shared button styles and the error box                                                                                                  |
+| `src/components/upload/UploadZone.tsx`        | **Reference implementation.** Full cycle: dropzone → upload → pin → metadata → list → download. Read this first when building new features. |
+| `src/components/Navbar.tsx`                   | Public key + sign out                                                                                                                       |
+| `src/components/DevNote.tsx`                  | Amber callout — remove or replace for production                                                                                            |
+| `src/types/uint8array-hex.d.ts`               | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them)                                                           |
 
 ## SDK usage patterns
 
@@ -192,16 +192,16 @@ If a specific SDK build rejects the cursor shape (edge cases with `Date` seriali
 
 Things that look right but aren't:
 
-- **Don't persist `Sdk` to storage.** It's a live WASM handle; rehydrate it via `Builder.connected(appKey)` on mount.
+- **Don't persist `Sdk` to storage.** It's a live WASM handle; `reconnect()` rebuilds it with `new Builder(url, APP_META).connected(key)` on each load.
 - **Don't forget `pinObject`.** A successful `upload` that isn't pinned is a transient object — the indexer will eventually drop it.
-- **Don't conflate `APP_KEY` and `AppKey`.** `APP_KEY` is the app identity constant; `AppKey` is the user's key class.
 - **Don't stuff large payloads into metadata.** It's a descriptor. Put file bytes in the object, not in metadata.
 - **Don't re-bundle or wrap the WASM.** Vite dev needs `optimizeDeps: { exclude: ['@siafoundation/sia-storage'] }` (already set in `vite.config.ts`) because the SDK's `import.meta.url`-relative WASM path breaks under pre-bundling. If you add another bundler (Webpack, Rollup), check the SDK README for the equivalent.
-- **A Builder is spent once approval or registration fails.** `waitForApproval()` rejects when the user denies the request (`user rejected connection request`) and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering from either means a new `Builder` and a new `requestConnection()`. The auth store starts `waitForApproval()` inside `startApproval()`, once per Builder, instead of in a component effect that would run again whenever the approve screen remounts (and twice under React StrictMode).
-- **Ignore results from a replaced Builder.** The SDK has no way to cancel `waitForApproval()` or `register()`, so a result can arrive after the user went back or requested a new link. The auth store and `RecoveryScreen` check that the Builder is still the current one before moving the flow.
+- **A `Builder` is one connection request, and it is spent once anything fails.** `waitForApproval()` rejects when the user denies the request, when it expires, and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering means a new `Builder` and a new `requestConnection()`, which is what **Request a new link** and **Start over** do.
+- **Keep SDK calls in the store, not in effects.** `waitForApproval()` starts inside `connect()`, once per request. A component effect would run again whenever the screen remounts, and twice under React StrictMode in dev, and the second call fails. The SDK cannot cancel a wait, so its result is checked against the current `request` before it moves the flow.
+- **`initSia()` remembers a failed load.** If the WASM fetch fails once, every later call rejects the same way, so the only recovery is a page reload. The loading screen offers one.
 - **`onShardUploaded.shardSize` is encoded bytes, not source bytes.** If you sum it, you're measuring on-wire traffic. Use `encodedSize()` for the matching denominator, or scale to source via `(bytes / encodedTotal) * file.size`.
 - **Numeric types differ on Node vs browser.** Browser uses `number` (~9 PB safe); Node uses `bigint`. Template is browser-only, so `number` is correct here.
-- **Sign-out should clear localStorage.** `useAuthStore.getState().reset()` + `window.location.reload()` is the pattern in `Navbar.tsx`.
+- **Sign out forgets the key and reloads.** `signOut()` clears `userKeyHex` and calls `window.location.reload()`, which is the one sure way to drop the live `Sdk` and its background work. Warn users first: without the phrase they cannot get back in.
 
 ## Extending the starter
 
@@ -236,9 +236,9 @@ Implement the polling pattern from **Syncing with the indexer**. That's how uplo
 
 Edit `DATA_SHARDS` / `PARITY_SHARDS` in `src/lib/constants.ts`. More parity = survives more host failures at the cost of more on-wire bytes. Keep `UploadZone`'s `encodedSize()` call in sync (it already reads from the same constants).
 
-### Change the app key
+### Change the app ID
 
-`APP_KEY` in `src/lib/constants.ts`. Generate with `crypto.getRandomValues(new Uint8Array(32)).toHex()`. **Changing it makes all previously uploaded data invisible to the app** — app key is the namespace.
+`APP_ID` in `src/lib/constants.ts`. Generate with `crypto.getRandomValues(new Uint8Array(32)).toHex()`. **Changing it makes all previously uploaded data invisible to the app** — the app ID is the namespace.
 
 ## Commands
 
@@ -256,6 +256,6 @@ bun run e2e     # Playwright tests on the production build and the dev server
 
 After any substantive change, run `bun run fmt`, then `bun run check`, `bun run build`, and `bun run e2e` before committing.
 
-`e2e/auth-flow.spec.ts` covers the connection flow against a fake indexer (`e2e/fake-indexer.ts`) served through Playwright's network interception: approval, denial or expiry, failed status checks, abandoned requests, registration errors, reconnecting, and sign out. No real account or manual approval is needed. Each test runs twice, on the production build (port 4173) and on the dev server with React StrictMode (port 4174).
+`e2e/auth-flow.spec.ts` covers the connection flow against a fake indexer (`e2e/fake-indexer.ts`) served through Playwright's network interception: approval with a new or existing phrase, denial, expiry, failed requests and status checks, abandoned requests, registration errors, reconnecting, a forgotten key, and sign out. No real account or manual approval is needed, and any console error fails the test. Each test runs twice, on the production build (port 4173) and on the dev server with React StrictMode (port 4174), because StrictMode runs effects twice and that is where a repeated SDK call shows up.
 
 Installs skip package versions published in the last three days (`bunfig.toml`), except `@siafoundation/sia-storage`. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.

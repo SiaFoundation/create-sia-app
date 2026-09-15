@@ -84,7 +84,7 @@ export function linkAgentGuides(dest: string) {
 // The indexer URL and description are free text from the prompts and land
 // inside single-quoted strings in src/lib/constants.ts, so an apostrophe
 // would end the string and break the generated app. The project name and app
-// key are validated to characters that need no escaping.
+// ID are validated to characters that need no escaping.
 export function escapeSingleQuoted(value: string) {
   return value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")
 }
@@ -99,7 +99,7 @@ function detectPackageManager(): 'bun' | 'npm' {
 }
 
 export async function scaffold(options: ScaffoldOptions) {
-  const { projectName, appKey, indexerUrl, appDescription } = options
+  const { projectName, appId, indexerUrl, appDescription } = options
   const targetDir = path.resolve(process.cwd(), projectName)
 
   if (fs.existsSync(targetDir)) {
@@ -119,7 +119,7 @@ export async function scaffold(options: ScaffoldOptions) {
 
   const replacements: [string, string][] = [
     ['{{APP_NAME}}', projectName],
-    ['{{APP_KEY}}', appKey],
+    ['{{APP_ID}}', appId],
     ['{{INDEXER_URL}}', escapeSingleQuoted(indexerUrl)],
     ['{{APP_DESCRIPTION}}', escapeSingleQuoted(appDescription)],
   ]
@@ -133,7 +133,7 @@ export async function scaffold(options: ScaffoldOptions) {
 
   try {
     execSync(`${pm} install`, { cwd: targetDir, stdio: 'ignore' })
-    // Substituted values such as the 64-character app key or a long
+    // Substituted values such as the 64-character app ID or a long
     // description can push a line past the formatter's width, which would
     // fail the new app's own `check` before the user has changed anything.
     execSync(`${pm} run fmt`, { cwd: targetDir, stdio: 'ignore' })

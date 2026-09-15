@@ -90,7 +90,7 @@ async function main() {
 
   step('Scaffolding')
   // The CLI takes the name as a positional arg and uses default options
-  // (random app key, default indexer, default description) when given one.
+  // (random app ID, default indexer, default description) when given one.
   execFileSync('node', [cliBin, APP_NAME], { cwd: SCRATCH, stdio: 'inherit' })
 
   step('Checking scaffolded files')
@@ -135,8 +135,8 @@ async function main() {
     )
   }
 
-  // The auth tests need a real app key, so they run here rather than against
-  // template/, whose constants still hold {{APP_KEY}}.
+  // The auth tests need a real app ID, so they run here rather than against
+  // template/, whose constants still hold {{APP_ID}}.
   step('Running end-to-end tests in scaffolded project')
   await $`bun run e2e`.cwd(APP_DIR)
 

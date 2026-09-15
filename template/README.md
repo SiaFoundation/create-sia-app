@@ -48,7 +48,7 @@ Indexer service
 1. **Connect** — Enter an indexer URL (default: `https://sia.storage`). The app sends your app metadata to request a connection.
 2. **Approve** — Visit the approval URL in another tab to authorize your app.
 3. **Recovery Phrase** — Generate a new 12-word phrase or enter an existing one. This deterministically derives all cryptographic keys.
-4. **Connected** — The SDK is ready. Your app key is saved to localStorage for future sessions.
+4. **Connected** — The SDK is ready. The user's key is saved to localStorage so the next visit reconnects without the phrase.
 
 ### Upload Flow
 
@@ -58,7 +58,7 @@ Files are encrypted in the browser, erasure coded into shards, and streamed dire
 
 ### App Key & Metadata
 
-Edit `src/lib/constants.ts` to set your app key, name, description, and indexer URL.
+Edit `src/lib/constants.ts` to set your app ID, name, description, and default indexer URL.
 
 ### Replace the Upload UI
 

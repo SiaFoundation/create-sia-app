@@ -33,7 +33,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'bun run preview',
+      command: 'bun run build && bun run preview',
       url: PREVIEW_URL,
       reuseExistingServer: false,
     },

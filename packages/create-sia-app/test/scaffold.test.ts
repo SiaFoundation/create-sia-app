@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { validateAppKey, validateProjectName } from '../src/prompts.js'
+import { validateAppId, validateProjectName } from '../src/prompts.js'
 import {
   copyDir,
   escapeSingleQuoted,
@@ -55,19 +55,19 @@ describe('validateProjectName', () => {
   )
 })
 
-describe('validateAppKey', () => {
+describe('validateAppId', () => {
   const key = 'ab'.repeat(32)
 
   test('accepts 64 hex characters, ignoring surrounding whitespace', () => {
-    expect(validateAppKey(key)).toBeUndefined()
-    expect(validateAppKey(`  ${key.toUpperCase()}  `)).toBeUndefined()
+    expect(validateAppId(key)).toBeUndefined()
+    expect(validateAppId(`  ${key.toUpperCase()}  `)).toBeUndefined()
   })
 
   test.each([undefined, '', key.slice(1), `${key}a`, `${key.slice(1)}g`])(
     'rejects %p',
     (value) => {
-      expect(validateAppKey(value)).toBe(
-        'App key must be a 64-character hex string',
+      expect(validateAppId(value)).toBe(
+        'App ID must be a 64-character hex string',
       )
     },
   )

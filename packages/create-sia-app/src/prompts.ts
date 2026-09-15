@@ -5,7 +5,7 @@ import pc from 'picocolors'
 
 export type ScaffoldOptions = {
   projectName: string
-  appKey: string
+  appId: string
   indexerUrl: string
   appDescription: string
 }
@@ -24,9 +24,9 @@ export function validateProjectName(value: string | undefined) {
   return undefined
 }
 
-export function validateAppKey(value: string | undefined) {
+export function validateAppId(value: string | undefined) {
   if (!/^[a-f0-9]{64}$/i.test(value?.trim() ?? ''))
-    return 'App key must be a 64-character hex string'
+    return 'App ID must be a 64-character hex string'
   return undefined
 }
 
@@ -45,14 +45,14 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
   }
 
   const keyChoice = await p.select({
-    message: 'App key setup',
+    message: 'App ID',
     options: [
       {
         value: 'generate',
-        label: 'Generate a new app key',
+        label: 'Generate a new app ID',
         hint: 'Recommended',
       },
-      { value: 'existing', label: 'Enter an existing app key' },
+      { value: 'existing', label: 'Enter an existing app ID' },
     ],
   })
 
@@ -61,23 +61,23 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
     return null
   }
 
-  let appKey: string
+  let appId: string
 
   if (keyChoice === 'existing') {
-    const existingKey = await p.text({
-      message: 'Enter your app key (64-char hex)',
-      validate: validateAppKey,
+    const existingId = await p.text({
+      message: 'Enter your app ID (64-char hex)',
+      validate: validateAppId,
     })
 
-    if (isCancelled(existingKey)) {
+    if (isCancelled(existingId)) {
       p.cancel('Cancelled.')
       return null
     }
 
-    appKey = existingKey.trim()
+    appId = existingId.trim()
   } else {
-    appKey = crypto.randomBytes(32).toString('hex')
-    p.log.info(`Generated app key: ${pc.cyan(appKey)}`)
+    appId = crypto.randomBytes(32).toString('hex')
+    p.log.info(`Generated app ID: ${pc.cyan(appId)}`)
   }
 
   const indexerUrl = await p.text({
@@ -103,7 +103,7 @@ export async function runPrompts(): Promise<ScaffoldOptions | null> {
 
   return {
     projectName: projectName.trim(),
-    appKey,
+    appId,
     indexerUrl: indexerUrl.trim(),
     appDescription: appDescription.trim() || 'A Sia storage app',
   }
