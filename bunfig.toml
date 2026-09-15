@@ -2,8 +2,8 @@
 # npm supply-chain compromises are caught and unpublished within hours, and this
 # repo publishes to npm, so a compromised dev dependency could reach users.
 #
-# The Sia SDK is exempt so the nightly SDK bump can install a release the day it
-# ships.
+# The Sia SDK and its platform packages are exempt so the nightly SDK bump can
+# install a release the day it ships.
 [install]
 minimumReleaseAge = 259200
-minimumReleaseAgeExcludes = ["@siafoundation/sia-storage"]
+minimumReleaseAgeExcludes = ["@siafoundation/*"]
