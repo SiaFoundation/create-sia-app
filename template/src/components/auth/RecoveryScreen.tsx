@@ -1,25 +1,25 @@
 import {
-  type Builder,
   generateRecoveryPhrase,
   validateRecoveryPhrase,
 } from '@siafoundation/sia-storage'
 import { useState } from 'react'
 
+import { describeRegisterError } from '../../lib/connection'
 import { useAuthStore } from '../../stores/auth'
 import { CopyButton } from '../CopyButton'
 import { DevNote } from '../DevNote'
 
-export function RecoveryScreen({
-  builder,
-}: {
-  builder: React.RefObject<Builder | null>
-}) {
-  const { setSdk, setStoredKeyHex, setError } = useAuthStore()
+export function RecoveryScreen() {
+  const builder = useAuthStore((s) => s.builder)
+  const setSdk = useAuthStore((s) => s.setSdk)
+  const setStoredKeyHex = useAuthStore((s) => s.setStoredKeyHex)
+  const startOver = useAuthStore((s) => s.startOver)
   const [mode, setMode] = useState<'choose' | 'generate' | 'import'>('choose')
   const [phrase, setPhrase] = useState('')
   const [generatedPhrase, setGeneratedPhrase] = useState('')
   const [loading, setLoading] = useState(false)
   const [phraseError, setPhraseError] = useState<string | null>(null)
+  const [registerError, setRegisterError] = useState<string | null>(null)
 
   function handleGenerate() {
     const mnemonic = generateRecoveryPhrase()
@@ -41,9 +41,8 @@ export function RecoveryScreen({
   }
 
   async function handleRegister() {
-    const b = builder.current
-    if (!b) {
-      setError('No builder instance')
+    if (!builder) {
+      startOver()
       return
     }
 
@@ -56,12 +55,15 @@ export function RecoveryScreen({
     }
 
     setLoading(true)
+    setRegisterError(null)
     try {
-      const sdk = await b.register(mnemonic)
+      const sdk = await builder.register(mnemonic)
+      // The user may have started over while registration was in flight.
+      if (useAuthStore.getState().builder !== builder) return
       setStoredKeyHex(sdk.appKey().export().toHex())
       setSdk(sdk)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Registration failed')
+      setRegisterError(describeRegisterError(e))
     } finally {
       setLoading(false)
     }
@@ -104,6 +106,13 @@ export function RecoveryScreen({
               className="w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-medium rounded-lg transition-colors"
             >
               Enter Existing Phrase
+            </button>
+            <button
+              type="button"
+              onClick={startOver}
+              className="w-full py-2 text-neutral-500 hover:text-neutral-900 text-sm transition-colors"
+            >
+              Start over
             </button>
           </div>
         </div>
@@ -162,14 +171,32 @@ export function RecoveryScreen({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleRegister}
-          disabled={loading || !phrase.trim()}
-          className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white font-medium rounded-lg transition-colors"
-        >
-          {loading ? 'Registering...' : 'Complete Setup'}
-        </button>
+        {registerError ? (
+          <>
+            <div
+              role="alert"
+              className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"
+            >
+              {registerError} Start over to request a new connection.
+            </div>
+            <button
+              type="button"
+              onClick={startOver}
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Start over
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={handleRegister}
+            disabled={loading || !phrase.trim()}
+            className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white font-medium rounded-lg transition-colors"
+          >
+            {loading ? 'Registering...' : 'Complete Setup'}
+          </button>
+        )}
 
         <button
           type="button"
@@ -178,6 +205,7 @@ export function RecoveryScreen({
             setPhrase('')
             setGeneratedPhrase('')
             setPhraseError(null)
+            setRegisterError(null)
           }}
           className="w-full py-2 text-neutral-500 hover:text-neutral-900 text-sm transition-colors"
         >

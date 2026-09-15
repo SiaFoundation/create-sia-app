@@ -1,42 +1,29 @@
-import { Builder } from '@siafoundation/sia-storage'
 import { useState } from 'react'
 
-import { APP_META, DEFAULT_INDEXER_URL } from '../../lib/constants'
+import { errorMessage, requestConnection } from '../../lib/connection'
+import { DEFAULT_INDEXER_URL } from '../../lib/constants'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
 
-export function ConnectScreen({
-  onBuilder,
-}: {
-  onBuilder: (builder: Builder) => void
-}) {
-  const { indexerUrl, setIndexerUrl, setStep, setError, setApprovalUrl } =
-    useAuthStore()
+export function ConnectScreen() {
+  const indexerUrl = useAuthStore((s) => s.indexerUrl)
+  const setIndexerUrl = useAuthStore((s) => s.setIndexerUrl)
+  const startApproval = useAuthStore((s) => s.startApproval)
   const [url, setUrl] = useState(indexerUrl || DEFAULT_INDEXER_URL)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleConnect() {
     setLoading(true)
     setError(null)
     try {
-      const b = new Builder(url, APP_META)
-      onBuilder(b)
+      const builder = await requestConnection(url)
       setIndexerUrl(url)
-
-      try {
-        await b.requestConnection()
-        const approvalUrl = b.responseUrl()
-        setApprovalUrl(approvalUrl)
-        setStep('approve')
-      } catch (e) {
-        setError(
-          e instanceof Error
-            ? `Connection failed: ${e.message}. Check the indexer URL and that it allows requests from this origin (CORS).`
-            : 'Connection failed. Check the indexer URL and CORS configuration.',
-        )
-      }
+      startApproval(builder)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to connect')
+      setError(
+        `Connection failed: ${errorMessage(e)}. Check the indexer URL and that it allows requests from this origin (CORS).`,
+      )
     } finally {
       setLoading(false)
     }
@@ -85,6 +72,12 @@ export function ConnectScreen({
           >
             {loading ? 'Connecting...' : 'Connect'}
           </button>
+
+          {error && (
+            <p role="alert" className="text-red-600 text-sm">
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>

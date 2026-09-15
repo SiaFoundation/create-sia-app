@@ -44,9 +44,9 @@ loading → connect → approve → recovery → connected
 ```
 
 - **loading** — `initSia()` loads WASM; `AuthFlow` checks for a stored user key.
-- **connect** — User enters indexer URL. App constructs `new Builder(url, APP_META)` and calls `requestConnection()`.
-- **approve** — User visits `builder.responseUrl()` in another tab; the app polls `builder.waitForApproval()`.
-- **recovery** — User generates or enters a BIP-39 phrase; `builder.register(phrase)` returns the `Sdk`.
+- **connect** — User enters indexer URL. `requestConnection(url)` in `src/lib/connection.ts` constructs `new Builder(url, APP_META)` and calls `requestConnection()`; `startApproval(builder)` stores the Builder and starts `builder.waitForApproval()`.
+- **approve** — User visits `builder.responseUrl()` in another tab; the app waits on `builder.waitForApproval()`. If the user denies the request or a status check fails, the screen shows the error with **Request new link** (a new Builder) and **Back** (`startOver()`, returns to connect).
+- **recovery** — User generates or enters a BIP-39 phrase; `builder.register(phrase)` returns the `Sdk`. A registration error replaces **Complete Setup** with **Start over**, since that Builder cannot register again.
 - **connected** — `Sdk` is ready; main UI renders.
 
 **Returning users** skip connect/approve/recovery entirely: `AuthFlow` constructs a `Builder` and calls `builder.connected(appKey)` with the persisted key. Returns an `Sdk` if valid, `undefined` to fall back to `connect`.
@@ -58,12 +58,13 @@ loading → connect → approve → recovery → connected
 | File                                     | Role                                                                                                                                        |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/constants.ts`                   | `APP_KEY`, `APP_NAME`, `APP_META` (`AppMetadata`), indexer default, erasure-coding constants                                                |
-| `src/stores/auth.ts`                     | Zustand store: holds the `Sdk`, persists `storedKeyHex` + `indexerUrl`                                                                      |
+| `src/stores/auth.ts`                     | Zustand store: holds the `Sdk` and the in-progress `Builder`, waits for approval, persists `storedKeyHex` + `indexerUrl`                    |
+| `src/lib/connection.ts`                  | `requestConnection()` and the error messages for the auth screens                                                                           |
 | `src/stores/toast.ts`                    | Toast notifications (auto-dismiss)                                                                                                          |
 | `src/components/auth/AuthFlow.tsx`       | Orchestrator: `initSia()`, returning-user reconnect                                                                                         |
-| `src/components/auth/ConnectScreen.tsx`  | `new Builder(url, APP_META).requestConnection()`                                                                                            |
-| `src/components/auth/ApproveScreen.tsx`  | Polls `builder.waitForApproval()`                                                                                                           |
-| `src/components/auth/RecoveryScreen.tsx` | Generate / validate phrase → `builder.register()` → `Sdk`                                                                                   |
+| `src/components/auth/ConnectScreen.tsx`  | `requestConnection(url)` then `startApproval(builder)`; connection errors shown inline                                                      |
+| `src/components/auth/ApproveScreen.tsx`  | Shows the approval link, or on denial or failure offers **Request new link** or **Back**                                                    |
+| `src/components/auth/RecoveryScreen.tsx` | Generate / validate phrase → `builder.register()` → `Sdk`; errors inline with **Start over**                                                |
 | `src/components/upload/UploadZone.tsx`   | **Reference implementation.** Full cycle: dropzone → upload → pin → metadata → list → download. Read this first when building new features. |
 | `src/components/Navbar.tsx`              | Public key + sign out                                                                                                                       |
 | `src/components/DevNote.tsx`             | Amber callout — remove or replace for production                                                                                            |
@@ -196,8 +197,8 @@ Things that look right but aren't:
 - **Don't conflate `APP_KEY` and `AppKey`.** `APP_KEY` is the app identity constant; `AppKey` is the user's key class.
 - **Don't stuff large payloads into metadata.** It's a descriptor. Put file bytes in the object, not in metadata.
 - **Don't re-bundle or wrap the WASM.** Vite dev needs `optimizeDeps: { exclude: ['@siafoundation/sia-storage'] }` (already set in `vite.config.ts`) because the SDK's `import.meta.url`-relative WASM path breaks under pre-bundling. If you add another bundler (Webpack, Rollup), check the SDK README for the equivalent.
-- **Don't call `initSia()` more than once per mount.** It's already called in `AuthFlow`; additional call sites create race conditions.
-- **Don't call `builder.waitForApproval()` twice.** React strict mode will remount — `ApproveScreen` guards this with a `pollStarted` ref. Follow that pattern.
+- **A Builder is spent once approval or registration fails.** `waitForApproval()` rejects when the user denies the request (`user rejected connection request`) and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering from either means a new `Builder` and a new `requestConnection()`. The auth store starts `waitForApproval()` inside `startApproval()`, once per Builder, instead of in a component effect that would run again whenever the approve screen remounts (and twice under React StrictMode).
+- **Ignore results from a replaced Builder.** The SDK has no way to cancel `waitForApproval()` or `register()`, so a result can arrive after the user went back or requested a new link. The auth store and `RecoveryScreen` check that the Builder is still the current one before moving the flow.
 - **`onShardUploaded.shardSize` is encoded bytes, not source bytes.** If you sum it, you're measuring on-wire traffic. Use `encodedSize()` for the matching denominator, or scale to source via `(bytes / encodedTotal) * file.size`.
 - **Numeric types differ on Node vs browser.** Browser uses `number` (~9 PB safe); Node uses `bigint`. Template is browser-only, so `number` is correct here.
 - **Sign-out should clear localStorage.** `useAuthStore.getState().reset()` + `window.location.reload()` is the pattern in `Navbar.tsx`.
