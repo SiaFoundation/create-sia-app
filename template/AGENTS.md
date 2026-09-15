@@ -260,4 +260,4 @@ After any substantive change, run `bun run fmt`, then `bun run check` and `bun r
 
 `e2e/smoke.spec.ts` checks that the app loads to the connect screen with no console errors. Add a Playwright test in `e2e/` for each feature you build; anything that touches storage needs an approved connection, so keep the logic you can unit test pure.
 
-Installs skip package versions published in the last three days (`bunfig.toml`), except the Sia SDK and its platform packages under `@siafoundation/*`. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.
+Installs with bun skip package versions published in the last three days (`bunfig.toml`), except the Sia SDK and its platform packages under `@siafoundation/*`; npm has no equivalent setting. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.
