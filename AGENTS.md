@@ -44,19 +44,24 @@ publishing. The CLI supports Node.js 22.12 and newer.
 
 `bun run check` runs everything below in order. Run it before committing.
 
-| Command                        | What it does                                                                |
-| ------------------------------ | --------------------------------------------------------------------------- |
-| `bun run fmt`                  | oxfmt, rewrites files                                                       |
-| `bun run fmt:check`            | oxfmt, reports only                                                         |
-| `bun run lint`                 | oxlint over the CLI and scripts                                             |
-| `bun run typecheck`            | TypeScript over `scripts/` and the CLI                                      |
-| `bun run test`                 | Unit tests for the CLI, `bun test`                                          |
-| `bun run --cwd template check` | The template's own format check, lint, and typecheck                        |
-| `bun run --cwd template build` | Production build of the template                                            |
-| `bun run --cwd template e2e`   | Playwright smoke test against the template build                            |
-| `bun run test:scaffold`        | Packs the CLI, installs the tarball, scaffolds an app, checks and builds it |
+| Command                        | What it does                                                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `bun run fmt`                  | oxfmt, rewrites files                                                                                |
+| `bun run fmt:check`            | oxfmt, reports only                                                                                  |
+| `bun run lint`                 | oxlint over the CLI and scripts                                                                      |
+| `bun run typecheck`            | TypeScript over `scripts/` and the CLI                                                               |
+| `bun run test`                 | Unit tests for the CLI, `bun test`                                                                   |
+| `bun run --cwd template check` | The template's own format check, lint, and typecheck                                                 |
+| `bun run --cwd template build` | Production build of the template                                                                     |
+| `bun run test:scaffold`        | Packs the CLI, installs the tarball, scaffolds an app, checks, builds, and runs its Playwright tests |
 
 `bun run --cwd template e2e:install` downloads Chromium once per machine.
+
+The template's Playwright tests run inside the scaffolded app, not against
+`template/`. The auth tests construct a real `Builder`, and the SDK rejects the
+`{{APP_KEY}}` placeholder in `template/src/lib/constants.ts`. They talk to a
+fake indexer in `template/e2e/fake-indexer.ts`; when the indexer's auth
+responses change, update it to match.
 
 Code style is enforced by oxfmt: no semicolons, single quotes, 2-space indent,
 80 columns.

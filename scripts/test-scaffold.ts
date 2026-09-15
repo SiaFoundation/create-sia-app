@@ -135,6 +135,11 @@ async function main() {
     )
   }
 
+  // The auth tests need a real app key, so they run here rather than against
+  // template/, whose constants still hold {{APP_KEY}}.
+  step('Running end-to-end tests in scaffolded project')
+  await $`bun run e2e`.cwd(APP_DIR)
+
   step('Done')
   console.log(`✓ Scaffold smoke test passed (artifacts at ${APP_DIR})`)
 
