@@ -4,11 +4,12 @@ This repo publishes `create-sia-app`, a CLI that copies a starter app for the
 [Sia](https://sia.tech) storage network into a new directory. It is a bun
 workspace with two members that never import each other:
 
-| Path                      | What it is                                                                   |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| `packages/create-sia-app` | The CLI published to npm: prompts, template copy, install                    |
-| `template/`               | The app the CLI copies. It must build and pass its checks as its own project |
-| `scripts/`                | Bun scripts for the scaffold smoke test and releases                         |
+| Path                      | What it is                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `packages/create-sia-app` | The CLI published to npm: prompts, template copy, install                                        |
+| `template/`               | The app the CLI copies. It must build and pass its checks as its own project                     |
+| `scripts/`                | Bun scripts for the scaffold smoke test and releases                                             |
+| `template-tests/`         | Playwright tests for the template's connection flow, run inside a scaffolded app and not shipped |
 
 ## The template is what users get
 
@@ -44,24 +45,26 @@ publishing. The CLI supports Node.js 22.12 and newer.
 
 `bun run check` runs everything below in order. Run it before committing.
 
-| Command                        | What it does                                                                                         |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `bun run fmt`                  | oxfmt, rewrites files                                                                                |
-| `bun run fmt:check`            | oxfmt, reports only                                                                                  |
-| `bun run lint`                 | oxlint over the CLI and scripts                                                                      |
-| `bun run typecheck`            | TypeScript over `scripts/` and the CLI                                                               |
-| `bun run test`                 | Unit tests for the CLI, `bun test`                                                                   |
-| `bun run --cwd template check` | The template's own format check, lint, and typecheck                                                 |
-| `bun run --cwd template build` | Production build of the template                                                                     |
-| `bun run test:scaffold`        | Packs the CLI, installs the tarball, scaffolds an app, checks, builds, and runs its Playwright tests |
+| Command                        | What it does                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `bun run fmt`                  | oxfmt, rewrites files                                                                                          |
+| `bun run fmt:check`            | oxfmt, reports only                                                                                            |
+| `bun run lint`                 | oxlint over the CLI and scripts                                                                                |
+| `bun run typecheck`            | TypeScript over `scripts/` and the CLI                                                                         |
+| `bun run test`                 | Unit tests for the CLI, `bun test`                                                                             |
+| `bun run --cwd template check` | The template's own format check, lint, and typecheck                                                           |
+| `bun run --cwd template build` | Production build of the template                                                                               |
+| `bun run test:scaffold`        | Packs the CLI, installs the tarball, scaffolds an app, checks and builds it, then runs `template-tests/` in it |
 
 `bun run --cwd template e2e:install` downloads Chromium once per machine.
 
-The template's Playwright tests run inside the scaffolded app, not against
-`template/`. The auth tests construct a real `Builder`, and the SDK rejects the
-`{{APP_ID}}` placeholder in `template/src/lib/constants.ts`. They talk to a
-fake indexer in `template/e2e/fake-indexer.ts`; when the indexer's auth
-responses change, update it to match.
+The template ships one smoke test. The thorough connection flow tests live in
+`template-tests/` so users do not inherit them; the scaffold test copies them
+into the scaffolded app and runs them there, on both the production build and
+the dev server. They cannot run against `template/` because its constants still
+hold the `{{APP_ID}}` placeholder, which the SDK rejects. They talk to a fake
+indexer in `template-tests/fake-indexer.ts`; when the indexer's auth responses
+change, update it to match.
 
 Code style is enforced by oxfmt: no semicolons, single quotes, 2-space indent,
 80 columns.

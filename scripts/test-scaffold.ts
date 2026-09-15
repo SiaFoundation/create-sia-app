@@ -15,6 +15,7 @@
 
 import { execFileSync } from 'node:child_process'
 import {
+  copyFileSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -135,9 +136,21 @@ async function main() {
     )
   }
 
-  // The auth tests need a real app ID, so they run here rather than against
-  // template/, whose constants still hold {{APP_ID}}.
-  step('Running end-to-end tests in scaffolded project')
+  // The connection flow tests live in template-tests/ rather than shipping
+  // with every app. They need a real app ID, which template/ does not have,
+  // so they run here. Their config replaces the app's own.
+  step("Running the scaffolded project's own smoke test")
+  await $`bun run e2e`.cwd(APP_DIR)
+
+  step('Running the template tests in scaffolded project')
+  const suite = join(ROOT, 'template-tests')
+  copyFileSync(
+    join(suite, 'playwright.config.ts'),
+    join(APP_DIR, 'playwright.config.ts'),
+  )
+  for (const file of ['auth-flow.spec.ts', 'fake-indexer.ts']) {
+    copyFileSync(join(suite, file), join(APP_DIR, 'e2e', file))
+  }
   await $`bun run e2e`.cwd(APP_DIR)
 
   step('Done')
