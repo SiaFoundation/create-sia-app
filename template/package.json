@@ -16,7 +16,7 @@
     "e2e:install": "playwright install chromium"
   },
   "dependencies": {
-    "@siafoundation/sia-storage": "0.0.14",
+    "@siafoundation/sia-storage": "0.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zustand": "5.0.15"

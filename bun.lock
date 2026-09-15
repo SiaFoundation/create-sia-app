@@ -30,7 +30,7 @@
       "name": "{{APP_NAME}}",
       "version": "0.0.0",
       "dependencies": {
-        "@siafoundation/sia-storage": "0.0.14",
+        "@siafoundation/sia-storage": "0.1.0",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "zustand": "5.0.15",
@@ -176,17 +176,17 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.0.14", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.0.14", "@siafoundation/sia-storage-darwin-x64": "0.0.14", "@siafoundation/sia-storage-linux-arm64-gnu": "0.0.14", "@siafoundation/sia-storage-linux-x64-gnu": "0.0.14", "@siafoundation/sia-storage-win32-x64-msvc": "0.0.14" } }, "sha512-TIS3IH6SBZra2l0WoYxa56BdMcfYV9zvfXQv8fnQQ2sn/dtmi7YpHOHslTVQlG4Or0dUX85feaBu3q+gIZ6NrQ=="],
+    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.0", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.0", "@siafoundation/sia-storage-darwin-x64": "0.1.0", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.0", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.0", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.0" } }, "sha512-nSQ0WqHNc1Zmcb0timiHFDF5BH3JnqkpkyvGdw82dXPZFAQZCdHqWxJ0P743NxwpOF8/fQgRI157/8Uepd6F3w=="],
 
-    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.0.14", "", { "os": "darwin", "cpu": "arm64" }, "sha512-pc86+evbBH4LXwAdMmjpw9n27MgjPejoT5btdKQm+/CDEyMRIGPECOPRo0T2bc6yaBwe2p3R818HcBx6DMyP8w=="],
+    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-vs7NSuOMeFEhz1K3sxdqnbfwWWHV0mj+ET9r4uGPkPEYj3ONZcYbMlcuJCgWBYm0HbfuAQdUqADUDD1CguFAdw=="],
 
-    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.0.14", "", { "os": "darwin", "cpu": "x64" }, "sha512-5BNCip8F46VBiOcOMuGUVqrLhgG3XgouC1l0n3eN9lZtBqWv4WU1msu4NHNFs8V05XAdWfro8Xv/nh8iUwXUyw=="],
+    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-qFx2uS2IUjhs6D6qzSLVPcwtYmkiAfSkKu4aaSMuKh7hkPsAdXX0JSXZn6lnSNAhd0K9L79Vxd1lOrcD21gnZw=="],
 
-    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.0.14", "", { "os": "linux", "cpu": "arm64" }, "sha512-DGNdIy/ewJyIYzHu8soggKTtN6AuvYoSUV3+gS0XpeysPecN5VZpiYsLSaXQ+OEWKEd3bqlOgR/ksUqlcYkDnA=="],
+    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-MUM3sBSC0Fj+FcYZ1al4I+nbGej0ppFOWj+sjvWsbnq11aAanVITN0HBcMCrTC5Srroh9UaOgQeQITRCGjz8TA=="],
 
-    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.0.14", "", { "os": "linux", "cpu": "x64" }, "sha512-+VtaPDwj/FDTHjurJXauCX+/QCwpnlEvQmbrEBGnMO3F8zq/SDlvB8QhJO8G+edMUURikvAOXJrh1D+OgYkuKA=="],
+    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.0", "", { "os": "linux", "cpu": "x64" }, "sha512-k/WIpCEsUs0teYN0BOGU2N9DRSNf3YxfRWibBcj2xR7a5k7JFsdqewtdVGMJRJbeoedxDxeyNs3QTWth4T2EyQ=="],
 
-    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.0.14", "", { "os": "win32", "cpu": "x64" }, "sha512-jc+OItqpSP85gSQiWXywGEVMqeUnGVDdiv4ag50W4FUjvPGmZG0Ta9UGBATWUDQL80Css0bDhL6kMVlG9dJA3A=="],
+    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.0", "", { "os": "win32", "cpu": "x64" }, "sha512-hu/Q8Budr8W4tE7ucNsj0DIW1d61R3DhsVZftaryNqckvcwzoiNcsqBtkEyyZwzO6tZjizXvGc4flLXxS3yM2Q=="],
 
     "@tailwindcss/node": ["@tailwindcss/node@4.3.3", "", { "dependencies": { "@jridgewell/remapping": "^2.3.5", "enhanced-resolve": "^5.24.1", "jiti": "^2.7.0", "lightningcss": "1.32.0", "magic-string": "^0.30.21", "source-map-js": "^1.2.1", "tailwindcss": "4.3.3" } }, "sha512-/T8IKEsf9VTU6tLjgC7+sv2mOPtQxzE2jMw7u4Tt40Tx+QSZxpzh95/H6cMKoja9XuW7iMdLJYBB0o9G1CaAgg=="],
 

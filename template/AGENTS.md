@@ -134,9 +134,9 @@ await sdk.deleteObject(objectId)
 
 ```ts
 const validUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-const url = sdk.shareObject(pinnedObject, validUntil)
+const url = sdk.objectShareUrl(pinnedObject, validUntil)
 // On the recipient side (can be a different app / no auth needed):
-const obj = await sdk.sharedObject(url)
+const obj = await sdk.objectFromShareUrl(url)
 const stream = sdk.download(obj)
 ```
 
