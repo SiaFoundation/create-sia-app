@@ -4,19 +4,20 @@ import {
   type Sdk,
   type ShardProgress,
 } from '@siafoundation/sia-storage'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { APP_KEY, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
+import { APP_ID, DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
+import { errorMessage } from '../../lib/errors'
 import { useAuthStore } from '../../stores/auth'
 import { DevNote } from '../DevNote'
+import { ErrorAlert } from '../ErrorAlert'
 
 type FileMetadata = {
   name: string
   type: string
   size: number
   hash: string
-  createdAt?: number
-  updatedAt?: number
+  createdAt: number
 }
 
 function formatBytes(bytes: number): string {
@@ -50,12 +51,13 @@ type UploadProgress = {
 }
 
 type DownloadProgress = {
+  fileId: string
   shardsDone: number
   bytesDownloaded: number
   totalBytes: number
 }
 
-const isPlaceholderKey = APP_KEY.startsWith('{' + '{')
+const isPlaceholderId = APP_ID.startsWith('{{')
 
 async function fetchFiles(sdk: Sdk): Promise<UploadedFile[]> {
   const events = await sdk.objectEvents(undefined, 100)
@@ -98,14 +100,10 @@ function saveBlob(blob: Blob, fileName: string) {
 export function UploadZone() {
   const sdk = useAuthStore((s) => s.sdk)
   const [files, setFiles] = useState<UploadedFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [activeUpload, setActiveUpload] = useState<UploadProgress | null>(null)
+  const [upload, setUpload] = useState<UploadProgress | null>(null)
+  const [download, setDownload] = useState<DownloadProgress | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [downloading, setDownloading] = useState<string | null>(null)
-  const [downloadProgress, setDownloadProgress] =
-    useState<DownloadProgress | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!sdk) return
@@ -114,7 +112,7 @@ export function UploadZone() {
       .then((loaded) => {
         if (!cancelled) setFiles(loaded)
       })
-      .catch((e) => console.error('Failed to load files:', e))
+      .catch((e) => setError(`Could not list files: ${errorMessage(e)}`))
     return () => {
       cancelled = true
     }
@@ -122,10 +120,9 @@ export function UploadZone() {
 
   async function uploadFile(file: File) {
     if (!sdk) return
-    setUploading(true)
     setError(null)
     const encodedTotal = encodedSize(file.size, DATA_SHARDS, PARITY_SHARDS)
-    setActiveUpload({
+    setUpload({
       fileName: file.name,
       fileSize: file.size,
       shardsDone: 0,
@@ -140,6 +137,7 @@ export function UploadZone() {
       )
       const hash = new Uint8Array(hashBuffer).toHex()
 
+      // upload() takes ownership of this object; use the returned one after.
       const object = new PinnedObject()
       let shardsDone = 0
       let bytesUploaded = 0
@@ -149,7 +147,7 @@ export function UploadZone() {
         onShardUploaded: (progress: ShardProgress) => {
           shardsDone++
           bytesUploaded += progress.shardSize
-          setActiveUpload({
+          setUpload({
             fileName: file.name,
             fileSize: file.size,
             shardsDone,
@@ -178,49 +176,35 @@ export function UploadZone() {
         ...prev,
       ])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed')
+      setError(`Upload failed: ${errorMessage(e)}`)
     } finally {
-      setUploading(false)
-      setActiveUpload(null)
+      setUpload(null)
     }
   }
 
   async function downloadFile(file: UploadedFile) {
     if (!sdk) return
-    setDownloading(file.id)
-    setDownloadProgress({
+    setDownload({
+      fileId: file.id,
       shardsDone: 0,
       bytesDownloaded: 0,
       totalBytes: file.metadata.size,
     })
     try {
-      let shardsDone = 0
       const stream = sdk.download(file.object, {
-        onShardDownloaded: () => {
-          shardsDone++
-          setDownloadProgress((prev) => ({
-            shardsDone,
-            bytesDownloaded: prev?.bytesDownloaded ?? 0,
-            totalBytes: file.metadata.size,
-          }))
-        },
-      } satisfies DownloadOptions)
-
-      const chunks = await readChunks(stream, (bytesDownloaded) => {
-        setDownloadProgress((prev) => ({
-          shardsDone: prev?.shardsDone ?? 0,
-          bytesDownloaded,
-          totalBytes: file.metadata.size,
-        }))
+        onShardDownloaded: () =>
+          setDownload((d) => d && { ...d, shardsDone: d.shardsDone + 1 }),
       })
+      const chunks = await readChunks(stream, (bytesDownloaded) =>
+        setDownload((d) => d && { ...d, bytesDownloaded }),
+      )
 
       const blob = new Blob(chunks as BlobPart[], { type: file.metadata.type })
       saveBlob(blob, file.metadata.name)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Download failed')
+      setError(`Download failed: ${errorMessage(e)}`)
     } finally {
-      setDownloading(null)
-      setDownloadProgress(null)
+      setDownload(null)
     }
   }
 
@@ -233,62 +217,47 @@ export function UploadZone() {
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragOver(false)
+    if (upload) return
     if (e.dataTransfer.files.length > 0) {
       handleFiles(e.dataTransfer.files)
     }
   }
 
-  const uploadPercent = activeUpload
+  const uploadPercent = upload
     ? Math.min(
         100,
-        Math.round(
-          (activeUpload.bytesUploaded / activeUpload.encodedTotal) * 100,
-        ),
+        Math.round((upload.bytesUploaded / upload.encodedTotal) * 100),
       )
     : 0
 
   return (
     <div className="flex-1 p-6 space-y-5 max-w-5xl mx-auto w-full">
-      {/* Dev notes — remove these when shipping */}
-      {isPlaceholderKey && (
-        <DevNote title="Replace Your App Key">
+      {/* Dev notes: remove these when shipping */}
+      {isPlaceholderId && (
+        <DevNote title="Set your app ID">
           <p>
-            You&apos;re using the template placeholder. Set your own key in{' '}
-            <code className="text-amber-700">src/lib/constants.ts</code> or
-            scaffold a fresh project with{' '}
-            <code className="text-amber-700">bunx create-sia-app</code>.
+            This is the template placeholder. Set your own app ID in{' '}
+            <code>src/lib/constants.ts</code> or scaffold a fresh project with{' '}
+            <code>bunx create-sia-app</code>.
           </p>
         </DevNote>
       )}
 
       <DevNote title="Upload & Download">
         <p>
-          <code className="text-amber-700">
-            sdk.upload(object, file.stream(), opts)
-          </code>{' '}
-          encrypts, erasure-codes, and streams shards directly to Sia hosts.{' '}
-          <code className="text-amber-700">sdk.download(object, opts)</code>{' '}
-          returns a <code className="text-amber-700">ReadableStream</code> of
-          decrypted bytes. Per-shard progress is reported via{' '}
-          <code className="text-amber-700">onShardUploaded</code> /{' '}
-          <code className="text-amber-700">onShardDownloaded</code>.
+          <code>sdk.upload(object, file.stream(), opts)</code> encrypts,
+          erasure-codes, and streams shards directly to Sia hosts.{' '}
+          <code>sdk.download(object, opts)</code> returns a{' '}
+          <code>ReadableStream</code> of decrypted bytes. Per-shard progress is
+          reported via <code>onShardUploaded</code> /{' '}
+          <code>onShardDownloaded</code>.
         </p>
       </DevNote>
 
       {error && (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
-          <span>{error}</span>
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-900 text-xs ml-4 shrink-0"
-          >
-            Dismiss
-          </button>
-        </div>
+        <ErrorAlert onDismiss={() => setError(null)}>{error}</ErrorAlert>
       )}
 
-      {/* Dropzone */}
       <label
         onDrop={handleDrop}
         onDragOver={(e) => {
@@ -300,7 +269,7 @@ export function UploadZone() {
           setDragOver(false)
         }}
         className={`relative block border-2 border-dashed rounded-xl p-16 text-center transition-all duration-150 ${
-          uploading
+          upload
             ? 'border-neutral-300 cursor-default'
             : dragOver
               ? 'border-green-600 bg-green-600/5 cursor-pointer'
@@ -308,28 +277,28 @@ export function UploadZone() {
         }`}
       >
         <input
-          ref={fileInputRef}
           type="file"
           multiple
           className="hidden"
-          disabled={uploading}
+          disabled={upload !== null}
           onChange={(e) => {
             if (e.target.files) handleFiles(e.target.files)
+            // Cleared so picking the same file again fires onChange.
             e.target.value = ''
           }}
         />
 
-        {activeUpload ? (
+        {upload ? (
           <div className="space-y-4">
             <p className="text-neutral-700 text-sm">
               Uploading{' '}
-              <span className="text-neutral-900">{activeUpload.fileName}</span>{' '}
+              <span className="text-neutral-900">{upload.fileName}</span>{' '}
               <span className="text-neutral-500">
-                ({formatBytes(activeUpload.fileSize)})
+                ({formatBytes(upload.fileSize)})
               </span>
             </p>
             <div className="w-full max-w-xs mx-auto bg-neutral-200 rounded-full h-1.5 overflow-hidden">
-              {activeUpload.shardsDone === 0 ? (
+              {upload.shardsDone === 0 ? (
                 <div className="bg-green-600 h-full rounded-full w-1/4 animate-indeterminate" />
               ) : (
                 <div
@@ -339,12 +308,11 @@ export function UploadZone() {
               )}
             </div>
             <p className="text-neutral-500 text-xs font-mono">
-              {activeUpload.shardsDone} shards &middot;{' '}
+              {upload.shardsDone} shards &middot;{' '}
               {formatBytes(
-                (activeUpload.bytesUploaded / activeUpload.encodedTotal) *
-                  activeUpload.fileSize,
+                (upload.bytesUploaded / upload.encodedTotal) * upload.fileSize,
               )}{' '}
-              / {formatBytes(activeUpload.fileSize)}
+              / {formatBytes(upload.fileSize)}
             </p>
           </div>
         ) : (
@@ -370,7 +338,6 @@ export function UploadZone() {
         )}
       </label>
 
-      {/* File list */}
       {files.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider">
@@ -378,7 +345,7 @@ export function UploadZone() {
           </h2>
           <div className="divide-y divide-neutral-200/80">
             {files.map((file) => {
-              const isDownloading = downloading === file.id
+              const progress = download?.fileId === file.id ? download : null
               return (
                 <div
                   key={file.id}
@@ -393,13 +360,14 @@ export function UploadZone() {
                       {file.metadata.type !== 'application/octet-stream' && (
                         <span> &middot; {file.metadata.type}</span>
                       )}
-                      {isDownloading && downloadProgress && (
+                      {progress && (
                         <span>
                           {' '}
-                          &middot;{' '}
-                          {formatBytes(downloadProgress.bytesDownloaded)} /{' '}
-                          {formatBytes(downloadProgress.totalBytes)} (
-                          {downloadProgress.shardsDone} shards)
+                          &middot; {formatBytes(
+                            progress.bytesDownloaded,
+                          )} /{' '}
+                          {formatBytes(progress.totalBytes)} (
+                          {progress.shardsDone} shards)
                         </span>
                       )}
                     </p>
@@ -408,11 +376,11 @@ export function UploadZone() {
                     <button
                       type="button"
                       onClick={() => downloadFile(file)}
-                      disabled={downloading !== null}
+                      disabled={download !== null}
                       className="text-xs text-neutral-500 hover:text-neutral-900 disabled:opacity-30 disabled:cursor-default transition-colors"
                       title="Download"
                     >
-                      {isDownloading ? (
+                      {progress ? (
                         <svg
                           className="w-4 h-4 animate-spin"
                           viewBox="0 0 24 24"

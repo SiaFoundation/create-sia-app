@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 function getDefaultOptions(projectName) {
   return {
     projectName,
-    appKey: crypto.randomBytes(32).toString("hex"),
+    appId: crypto.randomBytes(32).toString("hex"),
     indexerUrl: "https://sia.storage",
     appDescription: "A Sia storage app"
   };
@@ -26,9 +26,9 @@ function validateProjectName(value) {
     return "Use only letters, numbers, dashes, dots, and underscores";
   return;
 }
-function validateAppKey(value) {
+function validateAppId(value) {
   if (!/^[a-f0-9]{64}$/i.test(value?.trim() ?? ""))
-    return "App key must be a 64-character hex string";
+    return "App ID must be a 64-character hex string";
   return;
 }
 async function runPrompts() {
@@ -43,34 +43,34 @@ async function runPrompts() {
     return null;
   }
   const keyChoice = await p.select({
-    message: "App key setup",
+    message: "App ID",
     options: [
       {
         value: "generate",
-        label: "Generate a new app key",
+        label: "Generate a new app ID",
         hint: "Recommended"
       },
-      { value: "existing", label: "Enter an existing app key" }
+      { value: "existing", label: "Enter an existing app ID" }
     ]
   });
   if (isCancelled(keyChoice)) {
     p.cancel("Cancelled.");
     return null;
   }
-  let appKey;
+  let appId;
   if (keyChoice === "existing") {
-    const existingKey = await p.text({
-      message: "Enter your app key (64-char hex)",
-      validate: validateAppKey
+    const existingId = await p.text({
+      message: "Enter your app ID (64-char hex)",
+      validate: validateAppId
     });
-    if (isCancelled(existingKey)) {
+    if (isCancelled(existingId)) {
       p.cancel("Cancelled.");
       return null;
     }
-    appKey = existingKey.trim();
+    appId = existingId.trim();
   } else {
-    appKey = crypto2.randomBytes(32).toString("hex");
-    p.log.info(`Generated app key: ${pc.cyan(appKey)}`);
+    appId = crypto2.randomBytes(32).toString("hex");
+    p.log.info(`Generated app ID: ${pc.cyan(appId)}`);
   }
   const indexerUrl = await p.text({
     message: "Indexer URL",
@@ -91,7 +91,7 @@ async function runPrompts() {
   }
   return {
     projectName: projectName.trim(),
-    appKey,
+    appId,
     indexerUrl: indexerUrl.trim(),
     appDescription: appDescription.trim() || "A Sia storage app"
   };
@@ -167,7 +167,7 @@ function detectPackageManager() {
   }
 }
 async function scaffold(options) {
-  const { projectName, appKey, indexerUrl, appDescription } = options;
+  const { projectName, appId, indexerUrl, appDescription } = options;
   const targetDir = path.resolve(process.cwd(), projectName);
   if (fs.existsSync(targetDir)) {
     const entries = fs.readdirSync(targetDir);
@@ -181,7 +181,7 @@ async function scaffold(options) {
   const templateDir = findTemplateDir();
   const replacements = [
     ["{{APP_NAME}}", projectName],
-    ["{{APP_KEY}}", appKey],
+    ["{{APP_ID}}", appId],
     ["{{INDEXER_URL}}", escapeSingleQuoted(indexerUrl)],
     ["{{APP_DESCRIPTION}}", escapeSingleQuoted(appDescription)]
   ];

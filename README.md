@@ -12,10 +12,10 @@ bunx create-sia-app
 ◇  What is your project name?
 │  my-sia-app
 │
-◇  App key setup
-│  Generate a new app key
+◇  App ID
+│  Generate a new app ID
 │
-ℹ  Generated app key: a1b2c3...
+ℹ  Generated app ID: a1b2c3...
 │
 ◇  Indexer URL
 │  https://sia.storage

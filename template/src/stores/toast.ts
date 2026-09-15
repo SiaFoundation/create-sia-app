@@ -8,7 +8,6 @@ type Toast = {
 type ToastState = {
   toasts: Toast[]
   addToast: (message: string) => void
-  removeToast: (id: number) => void
 }
 
 let nextId = 0
@@ -22,6 +21,4 @@ export const useToastStore = create<ToastState>()((set) => ({
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
     }, 2500)
   },
-  removeToast: (id) =>
-    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))
