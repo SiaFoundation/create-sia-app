@@ -22,6 +22,7 @@ import {
   readdirSync,
   readFileSync,
   readlinkSync,
+  realpathSync,
   rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -35,7 +36,13 @@ const CLI_DIR = join(ROOT, 'packages', 'create-sia-app')
 const KEEP = process.argv.includes('--keep')
 const SKIP_BUILD = process.argv.includes('--skip-build')
 
-const SCRATCH = join(tmpdir(), 'create-sia-app-scaffold-test')
+// On Windows, tmpdir() can be an 8.3 short path (C:\Users\RUNNER~1\...).
+// Vite compares request paths against the real path when deciding what it
+// may serve, so the dev server refuses the app unless the two match.
+const SCRATCH = join(
+  realpathSync.native(tmpdir()),
+  'create-sia-app-scaffold-test',
+)
 const INSTALL_DIR = join(SCRATCH, 'cli')
 const APP_NAME = 'scaffold-smoke-app'
 const APP_DIR = join(SCRATCH, APP_NAME)
