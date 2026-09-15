@@ -12,9 +12,10 @@ import type { Page, Route } from '@playwright/test'
  * returns 204 for a registered user key and 401 otherwise. An approved status
  * reports `reconnecting` once any user key has registered, as it does for a
  * connect key that already has an account for the app. After connecting, the SDK
- * and the upload screen read `/hosts` and `/objects`, answered with empty
- * lists. Connect bodies must carry the four required fields; request
- * signatures are not checked.
+ * and the upload screen read `/hosts`, `/objects`, and `/sharing`, answered with
+ * empty lists. A share link reads `/shared/hosts` and `/shared/objects`, also
+ * empty, or 401 "sharing key not found" once shares are revoked. Connect bodies
+ * must carry the four required fields; request signatures are not checked.
  *
  * The SDK checks status once right away and then every 5 seconds, so a change
  * made through `approvals` is picked up within one interval.
@@ -37,6 +38,8 @@ type Options = {
   connectDown: boolean
   statusDown: boolean
   authCheckDown: boolean
+  // Every share link is refused, as it is after its owner stops sharing.
+  sharesRevoked: boolean
 }
 
 export async function fakeIndexer(page: Page) {
@@ -47,6 +50,7 @@ export async function fakeIndexer(page: Page) {
     connectDown: false,
     statusDown: false,
     authCheckDown: false,
+    sharesRevoked: false,
   }
   const requestIds: string[] = []
   const approvals = new Map<string, Approval>()
@@ -124,6 +128,11 @@ export async function fakeIndexer(page: Page) {
       : fail(route, 401, 'account not found')
   }
 
+  function shared(route: Route) {
+    if (options.sharesRevoked) return fail(route, 401, 'sharing key not found')
+    return json(route, [])
+  }
+
   await page.route(`${INDEXER_URL}/**`, (route) => {
     const { pathname } = new URL(route.request().url())
     const [, id, action] =
@@ -132,7 +141,12 @@ export async function fakeIndexer(page: Page) {
     if (id && action === 'status') return status(route, id)
     if (action === 'register') return register(route)
     if (pathname === '/auth/check') return check(route)
-    if (pathname === '/hosts' || pathname === '/objects') return json(route, [])
+    if (['/hosts', '/objects', '/sharing'].includes(pathname)) {
+      return json(route, [])
+    }
+    if (pathname === '/shared/hosts' || pathname === '/shared/objects') {
+      return shared(route)
+    }
     return fail(route, 404, `the fake indexer has no ${pathname}`)
   })
 

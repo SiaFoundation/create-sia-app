@@ -62,7 +62,7 @@ Edit `src/lib/constants.ts` to set your app ID, name, description, and default i
 
 ### Replace the Upload UI
 
-The main post-auth component is `src/components/upload/UploadZone.tsx`. Replace it with your own UI — the SDK is available via:
+The main post-auth component is `src/components/files/YourFiles.tsx`. Replace it with your own UI — the SDK is available via:
 
 ```tsx
 const sdk = useAuthStore((s) => s.sdk)

@@ -11,10 +11,13 @@ export function Navbar() {
 
   return (
     <header className="border-b border-neutral-200/80">
-      <div className="flex items-center justify-between px-6 py-3 max-w-5xl mx-auto">
-        <h1 className="text-sm font-semibold text-neutral-900 tracking-tight">
+      <div className="flex items-center justify-between px-6 py-3 max-w-3xl mx-auto">
+        <a
+          href="#"
+          className="text-sm font-semibold text-neutral-900 tracking-tight"
+        >
           {APP_NAME}
-        </h1>
+        </a>
         {publicKey && (
           <div className="flex items-center gap-3">
             <span className="inline-flex h-2 w-2 rounded-full bg-green-600" />
