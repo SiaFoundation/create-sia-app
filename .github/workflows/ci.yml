@@ -42,5 +42,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install Playwright Chromium
+        working-directory: template
+        run: bunx playwright install chromium
+
       - name: Scaffold smoke test
         run: bun run test:scaffold

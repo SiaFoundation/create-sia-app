@@ -251,9 +251,11 @@ bun run lint    # oxlint
 bun run typecheck
 bun run check   # format check + lint + typecheck
 bun run e2e:install  # once per machine, downloads Chromium
-bun run e2e     # Playwright smoke test against the production build
+bun run e2e     # Playwright tests on the production build and the dev server
 ```
 
 After any substantive change, run `bun run fmt`, then `bun run check`, `bun run build`, and `bun run e2e` before committing.
+
+`e2e/auth-flow.spec.ts` covers the connection flow against a fake indexer (`e2e/fake-indexer.ts`) served through Playwright's network interception: approval, denial or expiry, failed status checks, abandoned requests, registration errors, reconnecting, and sign out. No real account or manual approval is needed. Each test runs twice, on the production build (port 4173) and on the dev server with React StrictMode (port 4174).
 
 Installs skip package versions published in the last three days (`bunfig.toml`), except `@siafoundation/sia-storage`. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.
