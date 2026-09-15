@@ -253,11 +253,11 @@ bun run lint    # oxlint
 bun run typecheck
 bun run check   # format check + lint + typecheck
 bun run e2e:install  # once per machine, downloads Chromium
-bun run e2e     # Playwright tests on the production build and the dev server
+bun run e2e     # Playwright, against the production build
 ```
 
 After any substantive change, run `bun run fmt`, then `bun run check` and `bun run e2e` (which builds first) before committing.
 
-`e2e/auth-flow.spec.ts` covers the connection flow against a fake indexer (`e2e/fake-indexer.ts`) served through Playwright's network interception: approval with a new or existing phrase, denial, expiry, failed requests and status checks, abandoned requests, registration errors, reconnecting, a forgotten key, and sign out. No real account or manual approval is needed, and any console error fails the test. Each test runs twice, on the production build (port 4173) and on the dev server with React StrictMode (port 4174), because StrictMode runs effects twice and that is where a repeated SDK call shows up.
+`e2e/smoke.spec.ts` checks that the app loads to the connect screen with no console errors. Add a Playwright test in `e2e/` for each feature you build; anything that touches storage needs an approved connection, so keep the logic you can unit test pure.
 
 Installs skip package versions published in the last three days (`bunfig.toml`), except `@siafoundation/sia-storage`. The dev server uses port 5173 and the preview server 4173, and each exits instead of moving to another port when that one is taken.

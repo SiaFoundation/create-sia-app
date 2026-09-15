@@ -17,5 +17,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["scripts"]
+  "include": ["scripts", "template-tests"]
 }

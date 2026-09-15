@@ -2,4 +2,4 @@
 default: minor
 ---
 
-New apps include Playwright tests for the connection flow that run against a fake indexer, so approval, denial, failures, registration errors, reconnecting, and sign out are covered without a real account. Every test runs on both the production build and the dev server.
+New apps ship one Playwright smoke test and a single-project config. The thorough connection flow tests moved into this repo, where CI runs them inside a freshly scaffolded app on both the production build and the dev server.
