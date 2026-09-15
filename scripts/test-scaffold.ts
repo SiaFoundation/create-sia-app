@@ -139,7 +139,7 @@ async function main() {
     )
   }
 
-  // The connection flow tests live in template-tests/ rather than shipping
+  // The connection and sharing tests live in template-tests/ rather than shipping
   // with every app. They need a real app ID, which template/ does not have,
   // so they run here. Their config replaces the app's own.
   step("Running the scaffolded project's own smoke test")
@@ -151,8 +151,10 @@ async function main() {
     join(suite, 'playwright.config.ts'),
     join(APP_DIR, 'playwright.config.ts'),
   )
-  for (const file of ['auth-flow.spec.ts', 'fake-indexer.ts']) {
-    copyFileSync(join(suite, file), join(APP_DIR, 'e2e', file))
+  for (const file of readdirSync(suite)) {
+    if (file.endsWith('.ts') && file !== 'playwright.config.ts') {
+      copyFileSync(join(suite, file), join(APP_DIR, 'e2e', file))
+    }
   }
   await $`bun run e2e`.cwd(APP_DIR)
 
