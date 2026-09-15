@@ -192,11 +192,20 @@ async function scaffold(options) {
   spinner2.message(`Installing dependencies with ${pm}...`);
   try {
     execSync(`${pm} install`, { cwd: targetDir, stdio: "ignore" });
+  } catch {
+    spinner2.stop(`Project created, but ${pm} install failed. Run it yourself.`);
+    nextSteps(projectName, pm);
+    return;
+  }
+  try {
     execSync(`${pm} run fmt`, { cwd: targetDir, stdio: "ignore" });
     spinner2.stop("Project created successfully");
   } catch {
-    spinner2.stop("Project created (install failed — run manually)");
+    spinner2.stop(`Project created, but formatting failed. Run ${pm} run fmt.`);
   }
+  nextSteps(projectName, pm);
+}
+function nextSteps(projectName, pm) {
   p2.note([
     `${pc2.green("cd")} ${projectName}`,
     `${pc2.green(pm === "bun" ? "bun dev" : "npm run dev")}`

@@ -12,7 +12,7 @@
     },
     "packages/create-sia-app": {
       "name": "create-sia-app",
-      "version": "0.1.17",
+      "version": "0.1.19",
       "bin": {
         "create-sia-app": "./dist/index.js",
       },
@@ -30,7 +30,7 @@
       "name": "{{APP_NAME}}",
       "version": "0.0.0",
       "dependencies": {
-        "@siafoundation/sia-storage": "^0.0.9",
+        "@siafoundation/sia-storage": "0.0.14",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "zustand": "5.0.15",

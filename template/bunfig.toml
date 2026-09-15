@@ -1,6 +1,7 @@
 # A package version published in the last three days cannot be installed. Most
 # npm supply-chain compromises are caught and unpublished within hours, so the
-# cost is running three days behind on new releases.
+# cost is running three days behind on new releases. This applies to bun
+# installs only; npm has no equivalent setting.
 #
 # The Sia SDK and its platform packages are exempt so a fix can be installed
 # the day it ships.
