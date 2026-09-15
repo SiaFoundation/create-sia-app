@@ -3,7 +3,16 @@
 # repo publishes to npm, so a compromised dev dependency could reach users.
 #
 # The Sia SDK and its platform packages are exempt so the nightly SDK bump can
-# install a release the day it ships.
+# install a release the day it ships. Bun matches exact names only (no
+# wildcards), so a platform package added in a new SDK release must be listed
+# here too.
 [install]
 minimumReleaseAge = 259200
-minimumReleaseAgeExcludes = ["@siafoundation/*"]
+minimumReleaseAgeExcludes = [
+  "@siafoundation/sia-storage",
+  "@siafoundation/sia-storage-darwin-arm64",
+  "@siafoundation/sia-storage-darwin-x64",
+  "@siafoundation/sia-storage-linux-arm64-gnu",
+  "@siafoundation/sia-storage-linux-x64-gnu",
+  "@siafoundation/sia-storage-win32-x64-msvc",
+]

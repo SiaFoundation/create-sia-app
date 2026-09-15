@@ -4,7 +4,14 @@
 # installs only; npm has no equivalent setting.
 #
 # The Sia SDK and its platform packages are exempt so a fix can be installed
-# the day it ships.
+# the day it ships. Bun matches exact names only, so list each package.
 [install]
 minimumReleaseAge = 259200
-minimumReleaseAgeExcludes = ["@siafoundation/*"]
+minimumReleaseAgeExcludes = [
+  "@siafoundation/sia-storage",
+  "@siafoundation/sia-storage-darwin-arm64",
+  "@siafoundation/sia-storage-darwin-x64",
+  "@siafoundation/sia-storage-linux-arm64-gnu",
+  "@siafoundation/sia-storage-linux-x64-gnu",
+  "@siafoundation/sia-storage-win32-x64-msvc",
+]
