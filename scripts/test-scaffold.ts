@@ -10,7 +10,6 @@
  *
  *   bun run scripts/test-scaffold.ts
  *   bun run scripts/test-scaffold.ts --keep         # leave the temp scaffold in place
- *   bun run scripts/test-scaffold.ts --skip-build   # reuse existing dist/
  */
 
 import { execFileSync } from 'node:child_process'
@@ -34,7 +33,6 @@ const ROOT = join(import.meta.dir, '..')
 const CLI_DIR = join(ROOT, 'packages', 'create-sia-app')
 
 const KEEP = process.argv.includes('--keep')
-const SKIP_BUILD = process.argv.includes('--skip-build')
 
 // On Windows, tmpdir() can be an 8.3 short path (C:\Users\RUNNER~1\...).
 // Vite compares request paths against the real path when deciding what it
@@ -68,10 +66,8 @@ function listFiles(dir: string): string[] {
 }
 
 async function main() {
-  if (!SKIP_BUILD) {
-    step('Building CLI')
-    await $`bun run build`.cwd(CLI_DIR)
-  }
+  step('Building CLI')
+  await $`bun run build`.cwd(CLI_DIR)
 
   step('Packing and installing CLI tarball')
   rmSync(SCRATCH, { recursive: true, force: true })

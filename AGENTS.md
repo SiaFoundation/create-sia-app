@@ -73,7 +73,7 @@ Code style is enforced by oxfmt: no semicolons, single quotes, 2-space indent,
 
 Every dependency is pinned to an exact version. `bunfig.toml`, at the root and
 in the template, refuses package versions published in the last three days,
-except `@siafoundation/sia-storage`. When upgrading, pick the newest version
+except everything under `@siafoundation/*`. When upgrading, pick the newest version
 that is at least three days old.
 
 A scheduled workflow bumps `@siafoundation/sia-storage` in
