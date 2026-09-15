@@ -16,7 +16,6 @@ type FileMetadata = {
   name: string
   type: string
   size: number
-  hash: string
   createdAt: number
 }
 
@@ -66,7 +65,11 @@ async function fetchFiles(sdk: Sdk): Promise<UploadedFile[]> {
     if (event.deleted || !event.object) continue
     const meta = decodeMetadata(event.object.metadata())
     if (meta?.name) {
-      loaded.push({ id: event.id, metadata: meta, object: event.object })
+      loaded.push({
+        id: event.object.id(),
+        metadata: meta,
+        object: event.object,
+      })
     }
   }
   return loaded
@@ -94,7 +97,8 @@ function saveBlob(blob: Blob, fileName: string) {
   a.href = url
   a.download = fileName
   a.click()
-  URL.revokeObjectURL(url)
+  // Some browsers cancel the download if the URL goes away in the same task.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 export function UploadZone() {
@@ -112,7 +116,9 @@ export function UploadZone() {
       .then((loaded) => {
         if (!cancelled) setFiles(loaded)
       })
-      .catch((e) => setError(`Could not list files: ${errorMessage(e)}`))
+      .catch((e) => {
+        if (!cancelled) setError(`Could not list files. ${errorMessage(e)}.`)
+      })
     return () => {
       cancelled = true
     }
@@ -120,7 +126,6 @@ export function UploadZone() {
 
   async function uploadFile(file: File) {
     if (!sdk) return
-    setError(null)
     const encodedTotal = encodedSize(file.size, DATA_SHARDS, PARITY_SHARDS)
     setUpload({
       fileName: file.name,
@@ -131,37 +136,26 @@ export function UploadZone() {
     })
 
     try {
-      const hashBuffer = await crypto.subtle.digest(
-        'SHA-256',
-        await file.arrayBuffer(),
-      )
-      const hash = new Uint8Array(hashBuffer).toHex()
-
       // upload() takes ownership of this object; use the returned one after.
       const object = new PinnedObject()
-      let shardsDone = 0
-      let bytesUploaded = 0
       const pinnedObject = await sdk.upload(object, file.stream(), {
         dataShards: DATA_SHARDS,
         parityShards: PARITY_SHARDS,
-        onShardUploaded: (progress: ShardProgress) => {
-          shardsDone++
-          bytesUploaded += progress.shardSize
-          setUpload({
-            fileName: file.name,
-            fileSize: file.size,
-            shardsDone,
-            bytesUploaded,
-            encodedTotal,
-          })
-        },
-      } satisfies UploadOptions)
+        onShardUploaded: (progress: ShardProgress) =>
+          setUpload(
+            (u) =>
+              u && {
+                ...u,
+                shardsDone: u.shardsDone + 1,
+                bytesUploaded: u.bytesUploaded + progress.shardSize,
+              },
+          ),
+      })
 
       const metadata: FileMetadata = {
         name: file.name,
         type: file.type || 'application/octet-stream',
         size: file.size,
-        hash,
         createdAt: Date.now(),
       }
 
@@ -176,7 +170,7 @@ export function UploadZone() {
         ...prev,
       ])
     } catch (e) {
-      setError(`Upload failed: ${errorMessage(e)}`)
+      setError(`Upload failed. ${errorMessage(e)}.`)
     } finally {
       setUpload(null)
     }
@@ -199,16 +193,18 @@ export function UploadZone() {
         setDownload((d) => d && { ...d, bytesDownloaded }),
       )
 
+      // TypeScript's BlobPart does not yet accept Uint8Array<ArrayBufferLike>.
       const blob = new Blob(chunks as BlobPart[], { type: file.metadata.type })
       saveBlob(blob, file.metadata.name)
     } catch (e) {
-      setError(`Download failed: ${errorMessage(e)}`)
+      setError(`Download failed. ${errorMessage(e)}.`)
     } finally {
       setDownload(null)
     }
   }
 
   async function handleFiles(fileList: FileList) {
+    setError(null)
     for (const file of Array.from(fileList)) {
       await uploadFile(file)
     }
@@ -232,7 +228,6 @@ export function UploadZone() {
 
   return (
     <div className="flex-1 p-6 space-y-5 max-w-5xl mx-auto w-full">
-      {/* Dev notes: remove these when shipping */}
       {isPlaceholderId && (
         <DevNote title="Set your app ID">
           <p>
@@ -243,7 +238,7 @@ export function UploadZone() {
         </DevNote>
       )}
 
-      <DevNote title="Upload & Download">
+      <DevNote title="Upload and download">
         <p>
           <code>sdk.upload(object, file.stream(), opts)</code> encrypts,
           erasure-codes, and streams shards directly to Sia hosts.{' '}
@@ -406,12 +401,6 @@ export function UploadZone() {
                         </svg>
                       )}
                     </button>
-                    <span
-                      className="text-[11px] text-neutral-400 font-mono group-hover:text-neutral-700 transition-colors"
-                      title={file.metadata.hash}
-                    >
-                      {file.metadata.hash.slice(0, 8)}...
-                    </span>
                   </div>
                 </div>
               )

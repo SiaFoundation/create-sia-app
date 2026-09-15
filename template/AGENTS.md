@@ -35,19 +35,19 @@ Don't hallucinate methods. If a method isn't in those files, it doesn't exist.
 
 ## Auth flow
 
-`src/stores/auth.ts` is the whole state machine. The screens under `src/components/auth/` render its state and call its actions; none of them talk to the SDK directly.
+`src/stores/auth.ts` is the whole state machine. The screens under `src/components/auth/` render its state and call its actions; none of them talk to the indexer. Outside the store, the auth screens only call the SDK's two pure phrase helpers, in `RecoveryScreen`.
 
 ```
 loading → connect → approve → recovery → connected
 ```
 
-- **loading** — `reconnect()` loads the WASM with `initSia()`. With a saved `userKeyHex` it calls `new Builder(indexerUrl, APP_META).connected(key)`: an `Sdk` means `connected`, `undefined` means the indexer no longer knows the key, which is dropped, and the flow goes to `connect`. A thrown error stays on `loading` with the message, a **Reload** button, and **Start over**.
+- **loading / unavailable** — `reconnect()` loads the WASM with `initSia()`; if that fails the step becomes `unavailable`, which offers only **Reload**. With a saved `userKeyHex` it calls `new Builder(indexerUrl, APP_META).connected(key)`: an `Sdk` means `connected`, `undefined` means the indexer no longer knows the key, which is dropped, and the flow goes to `connect`. A key that cannot be parsed is dropped the same way. A thrown error stays on `loading` with the message, a **Reload** button, and **Start over**.
 - **connect** — The user enters an indexer URL. `connect(url)` makes a `Builder`, calls `requestConnection()`, stores it as `request`, and starts `request.waitForApproval()` right there. The result of that wait lands later and is ignored if `request` has been replaced in the meantime.
 - **approve** — The user opens `approvalUrl` in another tab. When the wait resolves the step becomes `recovery`. If it rejects (denied, expired, or a failed status check) the error is shown with **Request a new link**, which is `connect(indexerUrl)` again, and **Start over**.
 - **recovery** — The user generates or enters a phrase; `register(phrase)` calls `request.register()` and finishes with the `Sdk`. A registration error is shown with **Start over** only, because that request cannot register again.
 - **connected** — `sdk` is set and the main UI renders. **Sign out** forgets `userKeyHex` and reloads.
 
-`startOver()` is the one way back from any failure: it drops the request, the saved key, and the error, and shows the connect screen. `busy` is true while an action is talking to the indexer; buttons disable on it and actions refuse to start, so nothing runs twice, including under React StrictMode's double effects in dev.
+`startOver()` is the way back from any failure except a failed SDK load: it drops the request, the saved key, and the error, and shows the connect screen. `busy` is true while an action is talking to the indexer; buttons disable on it and actions refuse to start, so nothing runs twice, including under React StrictMode's double effects in dev.
 
 **Persistence**: Zustand `persist` writes `userKeyHex` and `indexerUrl` to `localStorage` under `sia-auth-<first-16-of-APP_ID>`, keyed by app so scaffolds served from the same localhost origin don't share a session. Everything else, including the live `Sdk`, is rebuilt on each page load.
 
@@ -60,6 +60,7 @@ loading → connect → approve → recovery → connected
 | `src/stores/auth.ts`                          | The connection state machine: steps, the pending request, the `Sdk`, and every action that talks to the indexer                             |
 | `src/stores/toast.ts`                         | Toast notifications (auto-dismiss)                                                                                                          |
 | `src/components/auth/AuthFlow.tsx`            | Starts `reconnect()` on mount and renders the screen for the current step                                                                   |
+| `src/components/auth/LoadingScreen.tsx`       | The spinner, the reconnect error with **Reload** and **Start over**, and the `unavailable` screen                                           |
 | `src/components/auth/ConnectScreen.tsx`       | Indexer URL input, calls `connect(url)`                                                                                                     |
 | `src/components/auth/ApproveScreen.tsx`       | Shows the approval link while waiting; on failure offers **Request a new link** or **Start over**                                           |
 | `src/components/auth/RecoveryScreen.tsx`      | Generate or enter a phrase, calls `register(phrase)`; on failure offers **Start over**                                                      |
@@ -79,6 +80,7 @@ import { PinnedObject } from '@siafoundation/sia-storage'
 import { DATA_SHARDS, PARITY_SHARDS } from '../../lib/constants'
 
 const object = new PinnedObject()
+// The returned object is the one to keep; upload() takes ownership of `object`.
 const pinned = await sdk.upload(object, file.stream(), {
   dataShards: DATA_SHARDS,
   parityShards: PARITY_SHARDS,
@@ -196,8 +198,8 @@ Things that look right but aren't:
 - **Don't forget `pinObject`.** A successful `upload` that isn't pinned is a transient object — the indexer will eventually drop it.
 - **Don't stuff large payloads into metadata.** It's a descriptor. Put file bytes in the object, not in metadata.
 - **Don't re-bundle or wrap the WASM.** Vite dev needs `optimizeDeps: { exclude: ['@siafoundation/sia-storage'] }` (already set in `vite.config.ts`) because the SDK's `import.meta.url`-relative WASM path breaks under pre-bundling. If you add another bundler (Webpack, Rollup), check the SDK README for the equivalent.
-- **A `Builder` is one connection request, and it is spent once anything fails.** `waitForApproval()` rejects when the user denies the request, when it expires, and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering means a new `Builder` and a new `requestConnection()`, which is what **Request a new link** and **Start over** do.
-- **Keep SDK calls in the store, not in effects.** `waitForApproval()` starts inside `connect()`, once per request. A component effect would run again whenever the screen remounts, and twice under React StrictMode in dev, and the second call fails. The SDK cannot cancel a wait, so its result is checked against the current `request` before it moves the flow.
+- **A `Builder` is one connection request, and it is spent once anything fails.** `waitForApproval()` rejects when the user denies the request, when it expires, and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering means a new `Builder` and a new `requestConnection()`: **Request a new link** does that at once, **Start over** once the user presses Connect again.
+- **Keep the connection flow's SDK calls in the store, not in effects.** `waitForApproval()` starts inside `connect()`, once per request. A component effect would run again whenever the screen remounts, and twice under React StrictMode in dev, and the second call fails. The SDK cannot cancel a wait, so its result is checked against the current `request` before it moves the flow. Reads that are safe to repeat, like `objectEvents` in `UploadZone`, are fine in an effect with a cancel flag.
 - **`initSia()` remembers a failed load.** If the WASM fetch fails once, every later call rejects the same way, so the only recovery is a page reload. The loading screen offers one.
 - **`onShardUploaded.shardSize` is encoded bytes, not source bytes.** If you sum it, you're measuring on-wire traffic. Use `encodedSize()` for the matching denominator, or scale to source via `(bytes / encodedTotal) * file.size`.
 - **Numeric types differ on Node vs browser.** Browser uses `number` (~9 PB safe); Node uses `bigint`. Template is browser-only, so `number` is correct here.
@@ -222,7 +224,7 @@ Install `react-router-dom`. Gate routes on `step === 'connected'`; render `<Auth
 
 ### Add fields to file metadata
 
-Extend the `FileMetadata` type in `UploadZone.tsx`, write the extra fields in the upload handler, read them back in `loadFiles`. Schema is app-owned — do whatever makes sense. Just keep it small.
+Extend the `FileMetadata` type in `UploadZone.tsx`, write the extra fields in the upload handler, read them back in `fetchFiles`. Schema is app-owned — do whatever makes sense. Just keep it small.
 
 ### Search / filter
 
@@ -254,7 +256,7 @@ bun run e2e:install  # once per machine, downloads Chromium
 bun run e2e     # Playwright tests on the production build and the dev server
 ```
 
-After any substantive change, run `bun run fmt`, then `bun run check`, `bun run build`, and `bun run e2e` before committing.
+After any substantive change, run `bun run fmt`, then `bun run check` and `bun run e2e` (which builds first) before committing.
 
 `e2e/auth-flow.spec.ts` covers the connection flow against a fake indexer (`e2e/fake-indexer.ts`) served through Playwright's network interception: approval with a new or existing phrase, denial, expiry, failed requests and status checks, abandoned requests, registration errors, reconnecting, a forgotten key, and sign out. No real account or manual approval is needed, and any console error fails the test. Each test runs twice, on the production build (port 4173) and on the dev server with React StrictMode (port 4174), because StrictMode runs effects twice and that is where a repeated SDK call shows up.
 

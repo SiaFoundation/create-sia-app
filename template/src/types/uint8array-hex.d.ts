@@ -1,5 +1,5 @@
-// TC39 Uint8Array hex methods (Stage 3, supported in modern browsers).
-// Drop this file once `lib.es*.d.ts` ships them.
+// Uint8Array hex methods: shipped in current browsers, not yet in TypeScript's
+// lib. Delete this file once `lib.es*.d.ts` declares them.
 
 interface Uint8Array {
   toHex(): string

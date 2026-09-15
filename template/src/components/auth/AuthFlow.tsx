@@ -1,11 +1,9 @@
 import { useEffect } from 'react'
 
 import { useAuthStore } from '../../stores/auth'
-import { Button } from '../Button'
-import { ErrorAlert } from '../ErrorAlert'
 import { ApproveScreen } from './ApproveScreen'
-import { AuthCard } from './AuthCard'
 import { ConnectScreen } from './ConnectScreen'
+import { LoadingScreen, UnavailableScreen } from './LoadingScreen'
 import { RecoveryScreen } from './RecoveryScreen'
 
 export function AuthFlow() {
@@ -19,6 +17,8 @@ export function AuthFlow() {
   switch (step) {
     case 'loading':
       return <LoadingScreen />
+    case 'unavailable':
+      return <UnavailableScreen />
     case 'connect':
       return <ConnectScreen />
     case 'approve':
@@ -28,31 +28,4 @@ export function AuthFlow() {
     case 'connected':
       return null
   }
-}
-
-function LoadingScreen() {
-  const error = useAuthStore((s) => s.error)
-  const startOver = useAuthStore((s) => s.startOver)
-
-  if (!error) {
-    return (
-      <div className="flex flex-col items-center justify-center flex-1 gap-4">
-        <div className="w-8 h-8 border-2 border-neutral-300 border-t-green-600 rounded-full animate-spin" />
-        <p className="text-neutral-500 text-sm">Loading...</p>
-      </div>
-    )
-  }
-
-  return (
-    <AuthCard
-      title="Could not reconnect"
-      description="Reload to try again, or start over with a new connection. Starting over needs your recovery phrase."
-    >
-      <ErrorAlert>{error}</ErrorAlert>
-      <Button onClick={() => window.location.reload()}>Reload</Button>
-      <Button variant="link" onClick={startOver}>
-        Start over
-      </Button>
-    </AuthCard>
-  )
 }

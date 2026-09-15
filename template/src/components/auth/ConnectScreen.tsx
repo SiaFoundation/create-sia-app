@@ -39,10 +39,10 @@ export function ConnectScreen() {
           placeholder={DEFAULT_INDEXER_URL}
           className="w-full px-4 py-3 bg-white border border-neutral-300 rounded-lg text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-green-600"
         />
+        {error && <ErrorAlert>{error}</ErrorAlert>}
         <Button onClick={() => connect(url)} disabled={busy || !url}>
           {busy ? 'Connecting...' : 'Connect'}
         </Button>
-        {error && <ErrorAlert>{error}</ErrorAlert>}
       </div>
     </AuthCard>
   )

@@ -13,8 +13,12 @@ export default defineConfig({
   fullyParallel: true,
   // A stray `test.only` would pass CI while running a single test.
   forbidOnly: CI,
-  // A test that only passes on retry is flaky, and retries hide that.
+  // A test that only passes on retry is flaky, and retries hide that. The
+  // budgets below are generous instead: a page load fetches and compiles the
+  // WASM module, and the SDK checks for approval every 5 seconds.
   retries: 0,
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     trace: 'retain-on-failure',
