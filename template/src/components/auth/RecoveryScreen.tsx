@@ -16,7 +16,11 @@ type Mode = 'choose' | 'generate' | 'enter'
 export function RecoveryScreen() {
   const busy = useAuthStore((s) => s.busy)
   const error = useAuthStore((s) => s.error)
+  const returning = useAuthStore((s) => s.returning)
+  const newAccountPhrase = useAuthStore((s) => s.newAccountPhrase)
   const register = useAuthStore((s) => s.register)
+  const confirmNewAccount = useAuthStore((s) => s.confirmNewAccount)
+  const cancelNewAccount = useAuthStore((s) => s.cancelNewAccount)
   const startOver = useAuthStore((s) => s.startOver)
   const [mode, setMode] = useState<Mode>('choose')
   const [phrase, setPhrase] = useState('')
@@ -28,6 +32,7 @@ export function RecoveryScreen() {
   }
 
   function back() {
+    cancelNewAccount()
     setMode('choose')
     setPhrase('')
     setPhraseError(null)
@@ -47,11 +52,54 @@ export function RecoveryScreen() {
     register(words)
   }
 
+  if (newAccountPhrase) {
+    return (
+      <AuthCard
+        title="This phrase starts a new account"
+        description="This account has used this app before, but the phrase does not match it. Continuing creates a second, empty account. Files saved before stay with the original phrase."
+      >
+        {error ? (
+          <>
+            <ErrorAlert>{error}</ErrorAlert>
+            <Button onClick={startOver}>Start over</Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={confirmNewAccount} disabled={busy}>
+              {busy ? 'Creating account...' : 'Create a new account'}
+            </Button>
+            <Button variant="link" onClick={back} disabled={busy}>
+              Use a different phrase
+            </Button>
+          </>
+        )}
+      </AuthCard>
+    )
+  }
+
   if (mode === 'choose') {
+    const enterPhrase = (
+      <Button
+        variant={returning ? 'primary' : 'secondary'}
+        onClick={() => setMode('enter')}
+      >
+        I already have a phrase
+      </Button>
+    )
+    const generatePhrase = (
+      <Button variant={returning ? 'secondary' : 'primary'} onClick={generate}>
+        Generate a new phrase
+      </Button>
+    )
+
     return (
       <AuthCard
         title="Recovery phrase"
-        description="New here? Generate a phrase. Already set up on another device? Enter the phrase you saved there."
+        description={
+          returning
+            ? 'This account has used this app before. Enter your recovery phrase to get your files back.'
+            : 'New here? Generate a phrase. Already set up on another device? Enter the phrase you saved there.'
+        }
       >
         <DevNote title="The phrase is the key">
           <p>
@@ -61,12 +109,16 @@ export function RecoveryScreen() {
             same files, and a lost phrase means lost data. The derived key is
             saved in localStorage so the user is not asked again on this device.
           </p>
+          <p className="mt-1">
+            <code>request.reconnecting()</code> says whether this account has
+            used the app before, and{' '}
+            <code>request.matchesExistingAppKey(phrase)</code> checks a phrase
+            against it before registering.
+          </p>
         </DevNote>
         <div className="space-y-3">
-          <Button onClick={generate}>Generate a new phrase</Button>
-          <Button variant="secondary" onClick={() => setMode('enter')}>
-            I already have a phrase
-          </Button>
+          {returning ? enterPhrase : generatePhrase}
+          {returning ? generatePhrase : enterPhrase}
           <Button variant="link" onClick={startOver}>
             Start over
           </Button>
