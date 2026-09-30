@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // The template, built as a generated app by scripts/build-site.ts. It is not
+  // part of what the CLI publishes.
+  "name": "create-sia-app",
+  // No account_id, since this repository is public. Deploys read the Sia
+  // Foundation account from CLOUDFLARE_ACCOUNT_ID, a repository secret in CI.
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  // Pull request previews run on workers.dev preview URLs, which are opt-in.
+  "preview_urls": true,
+  // `wrangler preview` refuses to run without this block, even empty. Each
+  // pull request gets a named preview from it.
+  "previews": {},
+  // A static site with no Worker script. The app routes with the URL
+  // fragment, so every other path serves index.html.
+  "assets": {
+    "directory": "./.site",
+    "not_found_handling": "single-page-application",
+  },
+}

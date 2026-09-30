@@ -1,0 +1,165 @@
+name: Previews
+
+# Each pull request from this repository gets a preview of the template, built
+# as a generated app by scripts/build-site.ts, at
+# pr-<number>-create-sia-app.sia-foundation.workers.dev. The preview is deleted
+# when the pull request is merged or closed, and a daily sweep deletes any that
+# a closing run missed. Nothing deploys from main.
+#
+# CLOUDFLARE_API_TOKEN needs Workers Scripts edit access on the Sia Foundation
+# account. The account's ID is the CLOUDFLARE_ACCOUNT_ID secret rather than a
+# field in wrangler.jsonc, since this repository is public.
+#
+# `wrangler preview` and `wrangler preview delete` are open beta commands in
+# wrangler 4.142, so a wrangler upgrade can change their output or flags.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  schedule:
+    - cron: '41 6 * * *'
+  workflow_dispatch:
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  # The Worker the previews belong to, the `name` in wrangler.jsonc.
+  WORKER: create-sia-app
+  # The deleting jobs check nothing out, so they cannot read the wrangler
+  # version from package.json. Keep the two the same.
+  WRANGLER: wrangler@4.142.0
+
+# A newer push to the same pull request supersedes an upload still running.
+# Closing one cancels its upload, so the delete never races a late upload.
+concurrency:
+  group: previews-${{ github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    # Secrets are not available to pull requests from forks.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build:site
+
+      # The preview keeps its URL as the pull request gets more commits.
+      - name: Upload the preview
+        id: preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          bunx wrangler preview --name "pr-$PR" --json > preview.out
+          # wrangler prints its asset upload lines to stdout ahead of the JSON.
+          url=$(sed -n '/^{/,$p' preview.out | jq -er '.preview.urls[0]')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment the preview link
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          URL: ${{ steps.preview.outputs.url }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          printf 'Preview of the template: %s\n' "$URL" > comment.md
+          .github/scripts/pr-comment.sh preview comment.md
+
+  # No checkout. Once a pull request closes, GitHub removes its merge ref, and
+  # a merged branch is often deleted, so there may be nothing to check out.
+  # Deleting needs only the Worker's name.
+  delete-preview:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      # A pull request whose preview never finished uploading has nothing to
+      # delete, and Cloudflare answers that with "Preview not found".
+      - name: Delete the preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -uo pipefail
+          if ! bunx "$WRANGLER" preview delete --worker-name "$WORKER" \
+            --name "pr-$PR" --skip-confirmation 2>&1 | tee delete.log; then
+            grep -q 'Preview not found' delete.log || exit 1
+          fi
+
+      # Edits the preview link comment, when there is one, so the link is not
+      # left reading as live.
+      - name: Mark the preview comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          set -euo pipefail
+          if [ "$MERGED" = "true" ]; then state="merged"; else state="closed"; fi
+          marker='<!-- preview -->'
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" |
+            sed -n 1p)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" \
+              -f body="$marker
+          Preview deleted: this pull request was $state." >/dev/null
+          fi
+
+  # Catches previews a closing run left behind, for example when GitHub
+  # cancelled the run before a runner picked it up. Deleting is safe to repeat,
+  # so it tries every pull request closed in the last 30 days.
+  sweep:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Delete previews of closed pull requests
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          since=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          prs=$(gh pr list -R "$GITHUB_REPOSITORY" --state closed --limit 200 \
+            --json number,closedAt --jq ".[] | select(.closedAt > \"$since\") | .number")
+          failed=0
+          for pr in $prs; do
+            if bunx "$WRANGLER" preview delete --worker-name "$WORKER" \
+              --name "pr-$pr" --skip-confirmation > delete.log 2>&1; then
+              echo "pr-$pr: deleted"
+            elif grep -q 'Preview not found' delete.log; then
+              echo "pr-$pr: none"
+            else
+              echo "pr-$pr: failed"
+              cat delete.log
+              failed=1
+            fi
+          done
+          exit "$failed"

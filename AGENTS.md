@@ -69,6 +69,24 @@ change, update it to match.
 Code style is enforced by oxfmt: no semicolons, single quotes, 2-space indent,
 80 columns.
 
+## Pull request previews
+
+Each pull request from this repository gets a preview of the template at
+`pr-<number>-create-sia-app.sia-foundation.workers.dev`, linked in a comment on
+the pull request. `.github/workflows/previews.yml` builds it with
+`bun run build:site`, which copies `template/` the way the CLI does, with a
+fixed app ID in place of a random one, and writes the output to `.site/`.
+Nothing deploys from `main`.
+
+A preview is deleted when its pull request is merged or closed, and a daily
+sweep deletes any left behind by a closing run that failed or never started.
+The previews belong to the `create-sia-app` Worker in the Sia Foundation
+Cloudflare account. The account ID is not in this public repository. CI reads
+it from the `CLOUDFLARE_ACCOUNT_ID` secret.
+
+Changing the app ID in `scripts/build-site.ts` makes the previews a new app to
+every indexer account that approved them.
+
 ## Dependencies
 
 Every dependency is pinned to an exact version. `bunfig.toml`, at the root and
