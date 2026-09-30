@@ -9,3 +9,6 @@ blob-report
 packages/create-sia-app/template/
 .env
 .npmrc
+# The demo site build and wrangler state
+.site
+.wrangler
