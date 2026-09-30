@@ -1,14 +1,16 @@
+import type { Streams } from '@siafoundation/sia-storage'
+
 import type { Download } from '../../hooks/useDownload'
-import type { Downloader, StoredFile } from '../../lib/files'
+import type { StoredFile } from '../../lib/files'
 import { IconButton } from '../Button'
 import { DownloadIcon, Spinner } from '../icons'
 
 export function DownloadButton({
-  source,
+  streams,
   file,
   download,
 }: {
-  source: Downloader
+  streams: Streams
   file: StoredFile
   download: Download
 }) {
@@ -17,7 +19,7 @@ export function DownloadButton({
   return (
     <IconButton
       label="Download"
-      onClick={() => download.start(source, file)}
+      onClick={() => download.start(streams, file)}
       disabled={download.progress !== null}
     >
       {downloading ? <Spinner /> : <DownloadIcon />}

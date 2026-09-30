@@ -44,6 +44,7 @@ async function fetchFiles(sdk: Sdk): Promise<StoredFile[]> {
 /** The signed-in user's files: upload, list, download, and share. */
 export function YourFiles() {
   const sdk = useAuthStore((s) => s.sdk)
+  const streams = useAuthStore((s) => s.streams)
   const shares = useSharesStore((s) => s.byFileId)
   const [files, setFiles] = useState<StoredFile[]>([])
   const [upload, setUpload] = useState<UploadProgress | null>(null)
@@ -119,7 +120,7 @@ export function YourFiles() {
     }
   }
 
-  if (!sdk) return null
+  if (!sdk || !streams) return null
 
   return (
     <Section
@@ -143,8 +144,11 @@ export function YourFiles() {
       <DevNote title="Upload, download, and share">
         <p>
           <code>sdk.upload()</code> encrypts, erasure-codes, and streams shards
-          directly to Sia hosts, and <code>sdk.download()</code> streams the
-          decrypted bytes back. Sharing creates a key with{' '}
+          directly to Sia hosts. Downloads go through{' '}
+          <code>openStreams(sdk, credentials)</code>: a service worker streams
+          the decrypted bytes to the browser&apos;s download manager, so a large
+          file never sits in the page&apos;s memory. Where the worker cannot
+          run, the page reads the file itself. Sharing creates a key with{' '}
           <code>sdk.createSharingKey()</code>, attaches the file with{' '}
           <code>sdk.shareObject()</code>, and puts the key&apos;s seed in the
           link.
@@ -183,7 +187,7 @@ export function YourFiles() {
                       <LinkIcon />
                     </IconButton>
                     <DownloadButton
-                      source={sdk}
+                      streams={streams}
                       file={file}
                       download={download}
                     />

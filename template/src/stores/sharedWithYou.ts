@@ -1,4 +1,9 @@
-import { initSia, SharedSdk } from '@siafoundation/sia-storage'
+import {
+  initSia,
+  openStreams,
+  SharedSdk,
+  type Streams,
+} from '@siafoundation/sia-storage'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -21,7 +26,7 @@ const STORAGE_KEY = `sia-shared-with-you-${APP_ID.slice(0, 16)}`
 
 export type SharedView =
   | { status: 'loading' }
-  | { status: 'ready'; sdk: SharedSdk; files: StoredFile[] }
+  | { status: 'ready'; sdk: SharedSdk; streams: Streams; files: StoredFile[] }
   // The owner stopped sharing, or the key expired.
   | { status: 'unavailable' }
   | { status: 'error'; message: string }
@@ -78,7 +83,14 @@ export const useSharedWithYouStore = create<SharedWithYouState>()(
             await initSia()
             const sdk = await SharedSdk.connect(link.indexerUrl, link.seed)
             const files = await listFiles(sdk)
-            setView(link.seed, { status: 'ready', sdk, files })
+            // Removed while loading, so nothing would close the streams.
+            if (!get().links.some((l) => l.seed === link.seed)) return
+            setView(link.seed, {
+              status: 'ready',
+              sdk,
+              streams: openStreams(sdk, link),
+              files,
+            })
           } catch (e) {
             const message = errorMessage(e)
             // The indexer answers 401 "sharing key not found" once a key is
@@ -95,11 +107,16 @@ export const useSharedWithYouStore = create<SharedWithYouState>()(
           }
         },
 
-        remove: (seed) =>
+        remove: (seed) => {
+          const view = get().views[seed]
+          // The service worker keeps its own connection to the share, and the
+          // seed with it, until the streams close.
+          if (view?.status === 'ready') view.streams.close()
           set((s) => {
             const { [seed]: _, ...views } = s.views
             return { links: s.links.filter((l) => l.seed !== seed), views }
-          }),
+          })
+        },
       }
     },
     {

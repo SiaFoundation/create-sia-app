@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { Navbar } from './components/Navbar'
+import { PrivateRelayNotice } from './components/PrivateRelayNotice'
 import { Toasts } from './components/Toasts'
 import { useShareLink } from './hooks/useShareLink'
 import { HomePage } from './pages/HomePage'
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
+      <PrivateRelayNotice />
       <div className="flex flex-1 flex-col">
         {shareLink ? <SharePage link={shareLink} /> : <HomePage />}
       </div>

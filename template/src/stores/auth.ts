@@ -1,4 +1,11 @@
-import { AppKey, Builder, initSia, type Sdk } from '@siafoundation/sia-storage'
+import {
+  AppKey,
+  Builder,
+  initSia,
+  openStreams,
+  type Sdk,
+  type Streams,
+} from '@siafoundation/sia-storage'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -56,6 +63,8 @@ type AuthState = {
   // one that has used this app before. Registering it waits for confirmation.
   newAccountPhrase: string | null
   sdk: Sdk | null
+  // Downloads for the Sdk's files. See useDownload.
+  streams: Streams | null
   // True while an action is talking to the indexer. Buttons disable on it, and
   // actions refuse to start, so nothing runs twice.
   busy: boolean
@@ -75,8 +84,15 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => {
       function setConnected(sdk: Sdk) {
+        get().streams?.close()
         set({
           sdk,
+          // The service worker connects its own Sdk from these and the app
+          // key, since it cannot use this page's.
+          streams: openStreams(sdk, {
+            indexerUrl: get().indexerUrl,
+            appMeta: APP_META,
+          }),
           userKeyHex: sdk.appKey().export().toHex(),
           step: 'connected',
           request: null,
@@ -107,6 +123,7 @@ export const useAuthStore = create<AuthState>()(
         returning: false,
         newAccountPhrase: null,
         sdk: null,
+        streams: null,
         busy: false,
         error: null,
 
@@ -238,7 +255,10 @@ export const useAuthStore = create<AuthState>()(
 
         signOut: () => {
           // The Sdk is a live WASM handle with background work of its own. A
-          // reload is the one sure way to drop it.
+          // reload is the one sure way to drop it. The service worker outlives
+          // the page and would keep its copy of the app key for minutes, so
+          // close its session first.
+          get().streams?.close()
           set({ userKeyHex: null })
           window.location.reload()
         },

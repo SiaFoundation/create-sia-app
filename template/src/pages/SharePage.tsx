@@ -64,9 +64,10 @@ export function SharePage({ link }: { link: ShareLink }) {
       <DevNote title="Opening a share">
         <p>
           <code>SharedSdk.connect(indexerUrl, seed)</code> opens the share
-          without an account, <code>objects()</code> lists its files, and{' '}
-          <code>download()</code> streams them. The owner pays for downloads.
-          Links opened here are saved in localStorage.
+          without an account and <code>objects()</code> lists its files.{' '}
+          <code>openStreams(sdk, {'{ indexerUrl, seed }'})</code> saves them
+          through the same service worker as your own files. The owner pays for
+          downloads. Links opened here are saved in localStorage.
         </p>
       </DevNote>
 
@@ -121,7 +122,7 @@ export function SharePage({ link }: { link: ShareLink }) {
                   detail={fileDetail(file, download.progress)}
                   actions={
                     <DownloadButton
-                      source={view.sdk}
+                      streams={view.streams}
                       file={file}
                       download={download}
                     />

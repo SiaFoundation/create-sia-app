@@ -58,38 +58,3 @@ export function fileDetail(
   if (progress?.fileId !== file.id) return formatBytes(file.metadata.size)
   return `Downloading ${formatBytes(progress.bytesDownloaded)} of ${formatBytes(progress.totalBytes)}`
 }
-
-export type Downloader = {
-  download(object: PinnedObject): ReadableStream<Uint8Array>
-}
-
-/**
- * Downloads a file with an `Sdk` or a `SharedSdk`, reporting progress, and
- * hands the bytes to the browser as a download.
- */
-export async function saveFile(
-  source: Downloader,
-  file: StoredFile,
-  onProgress: (bytesDownloaded: number) => void,
-) {
-  const reader = source.download(file.object).getReader()
-  const chunks: Uint8Array[] = []
-  let bytesDownloaded = 0
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    chunks.push(value)
-    bytesDownloaded += value.length
-    onProgress(bytesDownloaded)
-  }
-
-  // TypeScript's BlobPart does not yet accept Uint8Array<ArrayBufferLike>.
-  const blob = new Blob(chunks as BlobPart[], { type: file.metadata.type })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = file.metadata.name
-  a.click()
-  // Some browsers cancel the download if the URL goes away in the same task.
-  setTimeout(() => URL.revokeObjectURL(url), 0)
-}
