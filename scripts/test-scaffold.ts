@@ -138,6 +138,13 @@ async function main() {
       `Vite build produced no .wasm asset in dist/assets/:\n${assets.join('\n')}`,
     )
   }
+  // Without the worker at the site's root, every download falls back to
+  // reading the whole file into the page.
+  if (!existsSync(join(APP_DIR, 'dist/sia-storage-sw.js'))) {
+    fail(
+      'Vite build did not emit the SDK service worker, dist/sia-storage-sw.js',
+    )
+  }
 
   // The connection and sharing tests live in template-tests/ rather than shipping
   // with every app. They need a real app ID, which template/ does not have,

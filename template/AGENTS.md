@@ -53,40 +53,41 @@ loading → connect → approve → recovery → connected
 
 ## Key files
 
-| File                                      | Role                                                                                                                             |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `src/App.tsx`                             | Starts `reconnect()`, loads the user's shares, and picks the page: `SharePage` for a share link in the URL, `HomePage` otherwise |
-| `src/pages/HomePage.tsx`                  | The auth flow or your files, then the share links opened on this device                                                          |
-| `src/pages/SharePage.tsx`                 | The files behind one share link, with downloads. Works signed out                                                                |
-| `src/lib/constants.ts`                    | `APP_ID`, `APP_NAME`, `APP_META` (`AppMetadata`), default indexer, erasure-coding constants                                      |
-| `src/lib/errors.ts`                       | Turns SDK and indexer errors into the sentences the auth screens show                                                            |
-| `src/lib/files.ts`                        | File metadata, reading a `PinnedObject` into a file, and saving a download                                                       |
-| `src/lib/shareLink.ts`                    | Builds and parses share links                                                                                                    |
-| `src/stores/auth.ts`                      | The connection state machine: steps, the pending request, the `Sdk`, and every action that talks to the indexer                  |
-| `src/stores/shares.ts`                    | The signed-in user's shares, one sharing key per file                                                                            |
-| `src/stores/sharedWithYou.ts`             | Opened share links, persisted, each connected with `SharedSdk`                                                                   |
-| `src/stores/toast.ts`                     | Toast notifications (auto-dismiss)                                                                                               |
-| `src/hooks/useShareLink.ts`               | The share link in the URL fragment, updated on `hashchange`                                                                      |
-| `src/hooks/useDownload.ts`                | One download at a time with progress, for `Sdk` or `SharedSdk`                                                                   |
-| `src/components/auth/AuthFlow.tsx`        | Renders the screen for the current step                                                                                          |
-| `src/components/auth/LoadingScreen.tsx`   | The spinner, the reconnect error with **Reload** and **Start over**, and the `unavailable` screen                                |
-| `src/components/auth/ConnectScreen.tsx`   | Indexer URL input, calls `connect(url)`                                                                                          |
-| `src/components/auth/ApproveScreen.tsx`   | Shows the approval link while waiting; on failure offers **Request a new link** or **Start over**                                |
-| `src/components/auth/RecoveryScreen.tsx`  | Generate or enter a phrase, calls `register(phrase)`; on failure offers **Start over**                                           |
-| `src/components/auth/AuthCard.tsx`        | The centered layout every auth screen uses                                                                                       |
-| `src/components/files/YourFiles.tsx`      | **Reference implementation.** Upload, pin, metadata, list, download, and share. Read this first when building new features.      |
-| `src/components/files/Dropzone.tsx`       | The drop target and upload progress                                                                                              |
-| `src/components/files/ShareControls.tsx`  | Create a file's share link, copy it, or stop sharing                                                                             |
-| `src/components/files/SharedWithYou.tsx`  | The list of opened share links, each linking to its page                                                                         |
-| `src/components/files/DownloadButton.tsx` | The download icon button, with a spinner while downloading                                                                       |
-| `src/components/Layout.tsx`               | `Page` and `Section`                                                                                                             |
-| `src/components/List.tsx`                 | `List`, `Row`, and `Badge`, used for files and shares                                                                            |
-| `src/components/Button.tsx`               | `Button`, `LinkButton`, and `IconButton`                                                                                         |
-| `src/components/icons.tsx`                | The inline SVG icons                                                                                                             |
-| `src/components/ErrorAlert.tsx`           | The error box                                                                                                                    |
-| `src/components/Navbar.tsx`               | App name linking home, public key, sign out                                                                                      |
-| `src/components/DevNote.tsx`              | Amber callout, remove or replace for production                                                                                  |
-| `src/types/uint8array-hex.d.ts`           | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them)                                                |
+| File                                      | Role                                                                                                                                         |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/App.tsx`                             | Starts `reconnect()`, loads the user's shares, and picks the page: `SharePage` for a share link in the URL, `HomePage` otherwise             |
+| `src/pages/HomePage.tsx`                  | The auth flow or your files, then the share links opened on this device                                                                      |
+| `src/pages/SharePage.tsx`                 | The files behind one share link, with downloads. Works signed out                                                                            |
+| `src/lib/constants.ts`                    | `APP_ID`, `APP_NAME`, `APP_META` (`AppMetadata`), default indexer, erasure-coding constants                                                  |
+| `src/lib/errors.ts`                       | Turns SDK and indexer errors into the sentences the auth screens show                                                                        |
+| `src/lib/files.ts`                        | File metadata, reading a `PinnedObject` into a file, and download progress text                                                              |
+| `src/lib/shareLink.ts`                    | Builds and parses share links                                                                                                                |
+| `src/stores/auth.ts`                      | The connection state machine: steps, the pending request, the `Sdk` and its `openStreams` handle, and every action that talks to the indexer |
+| `src/stores/shares.ts`                    | The signed-in user's shares, one sharing key per file                                                                                        |
+| `src/stores/sharedWithYou.ts`             | Opened share links, persisted, each connected with `SharedSdk` and given its own `openStreams` handle                                        |
+| `src/stores/toast.ts`                     | Toast notifications (auto-dismiss)                                                                                                           |
+| `src/hooks/useShareLink.ts`               | The share link in the URL fragment, updated on `hashchange`                                                                                  |
+| `src/hooks/useDownload.ts`                | Saves a file with `streams.download()`, with progress when the page has to read the file itself                                              |
+| `src/components/auth/AuthFlow.tsx`        | Renders the screen for the current step                                                                                                      |
+| `src/components/auth/LoadingScreen.tsx`   | The spinner, the reconnect error with **Reload** and **Start over**, and the `unavailable` screen                                            |
+| `src/components/auth/ConnectScreen.tsx`   | Indexer URL input, calls `connect(url)`                                                                                                      |
+| `src/components/auth/ApproveScreen.tsx`   | Shows the approval link while waiting; on failure offers **Request a new link** or **Start over**                                            |
+| `src/components/auth/RecoveryScreen.tsx`  | Generate or enter a phrase, calls `register(phrase)`; on failure offers **Start over**                                                       |
+| `src/components/auth/AuthCard.tsx`        | The centered layout every auth screen uses                                                                                                   |
+| `src/components/files/YourFiles.tsx`      | **Reference implementation.** Upload, pin, metadata, list, download, and share. Read this first when building new features.                  |
+| `src/components/files/Dropzone.tsx`       | The drop target and upload progress                                                                                                          |
+| `src/components/files/ShareControls.tsx`  | Create a file's share link, copy it, or stop sharing                                                                                         |
+| `src/components/files/SharedWithYou.tsx`  | The list of opened share links, each linking to its page                                                                                     |
+| `src/components/files/DownloadButton.tsx` | The download icon button, with a spinner while downloading                                                                                   |
+| `src/components/PrivateRelayNotice.tsx`   | Warns Safari visitors on iCloud Private Relay, which the SDK cannot connect through                                                          |
+| `src/components/Layout.tsx`               | `Page` and `Section`                                                                                                                         |
+| `src/components/List.tsx`                 | `List`, `Row`, and `Badge`, used for files and shares                                                                                        |
+| `src/components/Button.tsx`               | `Button`, `LinkButton`, and `IconButton`                                                                                                     |
+| `src/components/icons.tsx`                | The inline SVG icons                                                                                                                         |
+| `src/components/ErrorAlert.tsx`           | The error box                                                                                                                                |
+| `src/components/Navbar.tsx`               | App name linking home, public key, sign out                                                                                                  |
+| `src/components/DevNote.tsx`              | Amber callout, remove or replace for production                                                                                              |
+| `src/types/uint8array-hex.d.ts`           | Ambient types for TC39 `Uint8Array.{toHex,fromHex}` (drop once TS lib ships them)                                                            |
 
 ## SDK usage patterns
 
@@ -134,12 +135,40 @@ const sourceProgress = (bytesUploaded / encodedTotal) * file.size
 
 ### Download
 
-Returns a `ReadableStream<Uint8Array>`. Buffer or pipe:
+`sdk.download()` returns a `ReadableStream<Uint8Array>`, for reading an object in code:
 
 ```ts
 const stream = sdk.download(pinnedObject)
 const blob = await new Response(stream).blob()
 ```
+
+To save a file, or to show one in `<img>`, `<video>` or `<audio>`, use `openStreams`. A service worker from the SDK reads the object in ranges and answers an ordinary URL, so a saved file goes to the browser's download manager without passing through the page's memory, and video seeks without loading the whole file. `vite.config.ts` serves the worker with the `siaStorage()` plugin.
+
+```ts
+import { openStreams } from '@siafoundation/sia-storage'
+
+// The worker connects its own SDK, so it needs what yours was made with.
+const streams = openStreams(sdk, { indexerUrl, appMeta: APP_META })
+const shared = openStreams(sharedSdk, { indexerUrl, seed })
+
+// From a click handler.
+await streams.download(pinnedObject, {
+  name: 'report.pdf',
+  type: 'application/pdf',
+})
+
+// For an element. Call release() when the element goes away.
+const file = await streams.url(pinnedObject, {
+  name: 'clip.mp4',
+  type: 'video/mp4',
+})
+video.src = file.url
+
+// When the SDK goes away.
+streams.close()
+```
+
+The starter keeps one handle per SDK: `streams` in `src/stores/auth.ts`, and one per opened link in `src/stores/sharedWithYou.ts`. Where the worker cannot run (plain HTTP, a private window in some browsers, a hard reload), the same calls read the object in the page, and `onProgress` reports the bytes read. `src/hooks/useDownload.ts` shows that progress in the file's row.
 
 ### Delete
 
@@ -230,7 +259,9 @@ Things that look right but aren't:
 - **Don't persist `Sdk` to storage.** It's a live WASM handle; `reconnect()` rebuilds it with `new Builder(url, APP_META).connected(key)` on each load.
 - **Don't forget `pinObject`.** A successful `upload` that isn't pinned is a transient object — the indexer will eventually drop it.
 - **Don't stuff large payloads into metadata.** It's a descriptor. Put file bytes in the object, not in metadata.
-- **Don't re-bundle or wrap the WASM.** Vite dev needs `optimizeDeps: { exclude: ['@siafoundation/sia-storage'] }` (already set in `vite.config.ts`) because the SDK's `import.meta.url`-relative WASM path breaks under pre-bundling. If you add another bundler (Webpack, Rollup), check the SDK README for the equivalent.
+- **Don't re-bundle or wrap the WASM.** The `siaStorage()` plugin in `vite.config.ts` excludes the SDK from Vite's dependency pre-bundling, which breaks its `import.meta.url`-relative WASM path, and serves the streaming worker. If you add another bundler (Webpack, Rollup), check the SDK README for the equivalent.
+- **Call `streams.download()` straight from the click.** Where the worker cannot run, it opens the browser's save picker, which only works during a click. Awaiting anything before it loses the click.
+- **Close a streams handle when its SDK goes away.** The worker holds its own connection, with the app key or share seed, until `close()` or a few minutes of idling. `signOut()` and removing a shared link both close theirs.
 - **A `Builder` is one connection request, and it is spent once anything fails.** `waitForApproval()` rejects when the user denies the request, when it expires, and when a single status check fails (for example a 503 from the indexer); calling it again fails with `must be in requesting_approval state`. After `register()` fails, calling it again fails with `must be in approved state`. Recovering means a new `Builder` and a new `requestConnection()`: **Request a new link** does that at once, **Start over** once the user presses Connect again.
 - **Keep the connection flow's SDK calls in the store, not in effects.** `waitForApproval()` starts inside `connect()`, once per request. A component effect would run again whenever the screen remounts, and twice under React StrictMode in dev, and the second call fails. The SDK cannot cancel a wait, so its result is checked against the current `request` before it moves the flow. Reads that are safe to repeat, like `objectEvents` in `YourFiles`, are fine in an effect with a cancel flag.
 - **`initSia()` remembers a failed load.** If the WASM fetch fails once, every later call rejects the same way, so the only recovery is a page reload. The loading screen offers one.
