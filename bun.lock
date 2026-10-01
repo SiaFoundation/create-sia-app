@@ -12,7 +12,7 @@
     },
     "packages/create-sia-app": {
       "name": "create-sia-app",
-      "version": "0.1.19",
+      "version": "0.1.20",
       "bin": {
         "create-sia-app": "./dist/index.js",
       },
@@ -30,7 +30,7 @@
       "name": "{{APP_NAME}}",
       "version": "0.0.0",
       "dependencies": {
-        "@siafoundation/sia-storage": "0.1.0",
+        "@siafoundation/sia-storage": "0.1.1",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "zustand": "5.0.15",
@@ -176,17 +176,17 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.0", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.0", "@siafoundation/sia-storage-darwin-x64": "0.1.0", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.0", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.0", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.0" } }, "sha512-nSQ0WqHNc1Zmcb0timiHFDF5BH3JnqkpkyvGdw82dXPZFAQZCdHqWxJ0P743NxwpOF8/fQgRI157/8Uepd6F3w=="],
+    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.1", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.1", "@siafoundation/sia-storage-darwin-x64": "0.1.1", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.1", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.1", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.1" }, "bin": { "sia-storage-worker": "dist/cli.js" } }, "sha512-r6Lje8W0AtkUGxlTZGlL4OjEy4OdfaD9+3+DTxngqcLAv06ODDuWKrUBmjUh363VRhdpI6mlrKRhHG2hOd27uQ=="],
 
-    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-vs7NSuOMeFEhz1K3sxdqnbfwWWHV0mj+ET9r4uGPkPEYj3ONZcYbMlcuJCgWBYm0HbfuAQdUqADUDD1CguFAdw=="],
+    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-DKfhKW9lAWWrYa5/Sj+xcCcMN+oxn1aclMAT1ut5lLR1v+ChLFuGJdqmsKsUcTSpIdzJp8K/4X7HEMac/wBAKQ=="],
 
-    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-qFx2uS2IUjhs6D6qzSLVPcwtYmkiAfSkKu4aaSMuKh7hkPsAdXX0JSXZn6lnSNAhd0K9L79Vxd1lOrcD21gnZw=="],
+    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-FgJEX5S7TGM0X1c0MvtmpUvVx26eAOPIfHy8nGSspAfMDQBeYjhh9yP9R/K6nfp+XG1RRWcIbaEycBGJDm5IPA=="],
 
-    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-MUM3sBSC0Fj+FcYZ1al4I+nbGej0ppFOWj+sjvWsbnq11aAanVITN0HBcMCrTC5Srroh9UaOgQeQITRCGjz8TA=="],
+    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-2X26kgc2VlSG009BdB/Lie5P26O1ZimWemlblsIgCoccfzeuccr4R9QdEMAQ/ZQfhborli8gdTe3IQ80rsurHQ=="],
 
-    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.0", "", { "os": "linux", "cpu": "x64" }, "sha512-k/WIpCEsUs0teYN0BOGU2N9DRSNf3YxfRWibBcj2xR7a5k7JFsdqewtdVGMJRJbeoedxDxeyNs3QTWth4T2EyQ=="],
+    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.1", "", { "os": "linux", "cpu": "x64" }, "sha512-EeORSaycbQ14RGMvw6WSWzgHXoQMyyrzio4BsV6LPkViqGC1C12EW3zvSTSywYYVl/eNciIYvdGwSSQ18IT+MA=="],
 
-    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.0", "", { "os": "win32", "cpu": "x64" }, "sha512-hu/Q8Budr8W4tE7ucNsj0DIW1d61R3DhsVZftaryNqckvcwzoiNcsqBtkEyyZwzO6tZjizXvGc4flLXxS3yM2Q=="],
+    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.1", "", { "os": "win32", "cpu": "x64" }, "sha512-tAuGEhjLMqQBVZHF4XyiWgqQYpYwfG3zQfkncVTEHj47/Xg0RLdiKyrtEhaCaMQUrSPio+cjVL/nozJsdWWcHg=="],
 
     "@tailwindcss/node": ["@tailwindcss/node@4.3.3", "", { "dependencies": { "@jridgewell/remapping": "^2.3.5", "enhanced-resolve": "^5.24.1", "jiti": "^2.7.0", "lightningcss": "1.32.0", "magic-string": "^0.30.21", "source-map-js": "^1.2.1", "tailwindcss": "4.3.3" } }, "sha512-/T8IKEsf9VTU6tLjgC7+sv2mOPtQxzE2jMw7u4Tt40Tx+QSZxpzh95/H6cMKoja9XuW7iMdLJYBB0o9G1CaAgg=="],
 
