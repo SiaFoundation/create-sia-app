@@ -1,4 +1,14 @@
 # Changelog
+## 0.1.21 (2026-10-05)
+
+### Features
+
+- Downloads in generated apps stream through the SDK's service worker to the browser's download manager instead of being held in the page's memory, and fall back to reading the file in the page where the worker cannot run. Safari visitors on iCloud Private Relay, which the SDK does not work through, see a notice asking them to turn it off.
+
+### Fixes
+
+- Bump @siafoundation/sia-storage to 0.1.1
+
 ## 0.1.20 (2026-09-16)
 
 ### Features
