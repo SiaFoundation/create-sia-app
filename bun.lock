@@ -13,7 +13,7 @@
     },
     "packages/create-sia-app": {
       "name": "create-sia-app",
-      "version": "0.1.20",
+      "version": "0.1.21",
       "bin": {
         "create-sia-app": "./dist/index.js",
       },
@@ -31,7 +31,7 @@
       "name": "{{APP_NAME}}",
       "version": "0.0.0",
       "dependencies": {
-        "@siafoundation/sia-storage": "0.1.1",
+        "@siafoundation/sia-storage": "0.1.2",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "zustand": "5.0.15",
@@ -307,17 +307,17 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.1", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.1", "@siafoundation/sia-storage-darwin-x64": "0.1.1", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.1", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.1", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.1" }, "bin": { "sia-storage-worker": "dist/cli.js" } }, "sha512-r6Lje8W0AtkUGxlTZGlL4OjEy4OdfaD9+3+DTxngqcLAv06ODDuWKrUBmjUh363VRhdpI6mlrKRhHG2hOd27uQ=="],
+    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.2", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.2", "@siafoundation/sia-storage-darwin-x64": "0.1.2", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.2", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.2", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.2" }, "bin": { "sia-storage-worker": "dist/cli.js" } }, "sha512-RDfyjoCFVfWBtG7wTJC7qPA9r3xsLsh8e8xhhO5KTi5cQY8oDNi06qivtWf2fWrpd9PZTJijp66oMDKlbfwUOw=="],
 
-    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-DKfhKW9lAWWrYa5/Sj+xcCcMN+oxn1aclMAT1ut5lLR1v+ChLFuGJdqmsKsUcTSpIdzJp8K/4X7HEMac/wBAKQ=="],
+    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-9wjHIxz4YVzlPHUMShYsDB1EWxMhYE/LDkJYJ3ljkvDmYtkzFd4NlQN55XMdyABCEEGTbuqHuOsV6FkfswCzuQ=="],
 
-    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-FgJEX5S7TGM0X1c0MvtmpUvVx26eAOPIfHy8nGSspAfMDQBeYjhh9yP9R/K6nfp+XG1RRWcIbaEycBGJDm5IPA=="],
+    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-A41Yc4DfZUWNqMz28CSMigt3pahwGUvDSiVV/T0w3Id4qR4Lw028UTqUX3aubeHapdEKlvQh/lsk0SjEt7jIWw=="],
 
-    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-2X26kgc2VlSG009BdB/Lie5P26O1ZimWemlblsIgCoccfzeuccr4R9QdEMAQ/ZQfhborli8gdTe3IQ80rsurHQ=="],
+    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.2", "", { "os": "linux", "cpu": "arm64" }, "sha512-Ac/KOrHFYc6kyK785TMbBe8cxpxYGj75e9/C91aeZI0R+Usjy1wS+dhkkMEhyYAr+fRFaG0CRqKoau7qArTVIg=="],
 
-    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.1", "", { "os": "linux", "cpu": "x64" }, "sha512-EeORSaycbQ14RGMvw6WSWzgHXoQMyyrzio4BsV6LPkViqGC1C12EW3zvSTSywYYVl/eNciIYvdGwSSQ18IT+MA=="],
+    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.2", "", { "os": "linux", "cpu": "x64" }, "sha512-a4POKCrn3tsHOOwSgxg8cONmUn5Kd4OJESTciv3a/zSjzFjCYGXLimR0jQ9rEAzToPdSbwlYADc8vjJXmb1ikg=="],
 
-    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.1", "", { "os": "win32", "cpu": "x64" }, "sha512-tAuGEhjLMqQBVZHF4XyiWgqQYpYwfG3zQfkncVTEHj47/Xg0RLdiKyrtEhaCaMQUrSPio+cjVL/nozJsdWWcHg=="],
+    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.2", "", { "os": "win32", "cpu": "x64" }, "sha512-K3Kp1Vcd2C2p1RaBZ+jpHrwW9J/8zrtjp8ZSoCvT5hkNTibdx7sbfeL/lL2tk8W93GwsUHv0hr4uUbAJfBQTGQ=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 
