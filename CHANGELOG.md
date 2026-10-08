@@ -1,4 +1,10 @@
 # Changelog
+## 0.1.22 (2026-10-08)
+
+### Fixes
+
+- Bump @siafoundation/sia-storage to 0.1.3
+
 ## 0.1.21 (2026-10-05)
 
 ### Features
