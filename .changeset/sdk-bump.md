@@ -2,4 +2,4 @@
 default: patch
 ---
 
-Bump @siafoundation/sia-storage to 0.1.2
+Bump @siafoundation/sia-storage to 0.1.3

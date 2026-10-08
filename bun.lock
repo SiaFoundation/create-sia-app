@@ -31,7 +31,7 @@
       "name": "{{APP_NAME}}",
       "version": "0.0.0",
       "dependencies": {
-        "@siafoundation/sia-storage": "0.1.2",
+        "@siafoundation/sia-storage": "0.1.3",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "zustand": "5.0.15",
@@ -307,17 +307,17 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.2", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.2", "@siafoundation/sia-storage-darwin-x64": "0.1.2", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.2", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.2", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.2" }, "bin": { "sia-storage-worker": "dist/cli.js" } }, "sha512-RDfyjoCFVfWBtG7wTJC7qPA9r3xsLsh8e8xhhO5KTi5cQY8oDNi06qivtWf2fWrpd9PZTJijp66oMDKlbfwUOw=="],
+    "@siafoundation/sia-storage": ["@siafoundation/sia-storage@0.1.3", "", { "optionalDependencies": { "@siafoundation/sia-storage-darwin-arm64": "0.1.3", "@siafoundation/sia-storage-darwin-x64": "0.1.3", "@siafoundation/sia-storage-linux-arm64-gnu": "0.1.3", "@siafoundation/sia-storage-linux-x64-gnu": "0.1.3", "@siafoundation/sia-storage-win32-x64-msvc": "0.1.3" }, "bin": { "sia-storage-worker": "dist/cli.js" } }, "sha512-wolxyzEOgTJAcc0fRDcgIU23nDjcHQ7YTEKA2BBNMIwArgkyMCbl4oY59sNn/RcGHDRzob0bw5Zy5WwEMH/jMw=="],
 
-    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-9wjHIxz4YVzlPHUMShYsDB1EWxMhYE/LDkJYJ3ljkvDmYtkzFd4NlQN55XMdyABCEEGTbuqHuOsV6FkfswCzuQ=="],
+    "@siafoundation/sia-storage-darwin-arm64": ["@siafoundation/sia-storage-darwin-arm64@0.1.3", "", { "os": "darwin", "cpu": "arm64" }, "sha512-506DFuomWCXAhkyXaRPaAcwJAjsihden0UxGjGd84Y2yyeuZAlf+GLrYSK1VMKzL0W3DFoNOikV1SFNOTNkz3w=="],
 
-    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-A41Yc4DfZUWNqMz28CSMigt3pahwGUvDSiVV/T0w3Id4qR4Lw028UTqUX3aubeHapdEKlvQh/lsk0SjEt7jIWw=="],
+    "@siafoundation/sia-storage-darwin-x64": ["@siafoundation/sia-storage-darwin-x64@0.1.3", "", { "os": "darwin", "cpu": "x64" }, "sha512-ETO3rcRd3b0hYFFcUpPzuI9uPB5cCVvchWww//eJX+L4nKKBzpeCEvuz4twXGR9/Cg/UaHB9vTuHfyHl+0Bp+Q=="],
 
-    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.2", "", { "os": "linux", "cpu": "arm64" }, "sha512-Ac/KOrHFYc6kyK785TMbBe8cxpxYGj75e9/C91aeZI0R+Usjy1wS+dhkkMEhyYAr+fRFaG0CRqKoau7qArTVIg=="],
+    "@siafoundation/sia-storage-linux-arm64-gnu": ["@siafoundation/sia-storage-linux-arm64-gnu@0.1.3", "", { "os": "linux", "cpu": "arm64" }, "sha512-N5XW2J3G4byjmSpY82YzZjhzy8FKHJhyKr+TRczdZyQQWgGoQ2WxCcpChq3s1eZPk4TBuHjgbBCQwbOReurJSQ=="],
 
-    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.2", "", { "os": "linux", "cpu": "x64" }, "sha512-a4POKCrn3tsHOOwSgxg8cONmUn5Kd4OJESTciv3a/zSjzFjCYGXLimR0jQ9rEAzToPdSbwlYADc8vjJXmb1ikg=="],
+    "@siafoundation/sia-storage-linux-x64-gnu": ["@siafoundation/sia-storage-linux-x64-gnu@0.1.3", "", { "os": "linux", "cpu": "x64" }, "sha512-pqEpSu+qdNu9Qu986EXGAxgqlJLwwX7xFs4V/0IKmvLzT/RzQMfjX9CCsz99v9i/TK7dq9ssIiPm3xsImFf2Aw=="],
 
-    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.2", "", { "os": "win32", "cpu": "x64" }, "sha512-K3Kp1Vcd2C2p1RaBZ+jpHrwW9J/8zrtjp8ZSoCvT5hkNTibdx7sbfeL/lL2tk8W93GwsUHv0hr4uUbAJfBQTGQ=="],
+    "@siafoundation/sia-storage-win32-x64-msvc": ["@siafoundation/sia-storage-win32-x64-msvc@0.1.3", "", { "os": "win32", "cpu": "x64" }, "sha512-O1kuZqYnvePyqfxgbNvwAN6Vm9g4Pz2c3eJB7CjYS0695uM4n5E2cLJQ+yAjSGYSKNufVlJOGm2+GgLqIuqJJA=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 
