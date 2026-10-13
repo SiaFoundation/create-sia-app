@@ -164,9 +164,14 @@ const file = await streams.url(pinnedObject, {
 })
 video.src = file.url
 
+// When a play is likely, such as the pointer reaching Play.
+playButton.onpointerenter = () => void file.warm()
+
 // When the SDK goes away.
 streams.close()
 ```
+
+A stream connects to the hosts holding the file only when the video asks for its first bytes, which takes a few seconds. `file.warm()` connects ahead of time by reading one byte. It reports no status or progress and never rejects.
 
 The starter keeps one handle per SDK: `streams` in `src/stores/auth.ts`, and one per opened link in `src/stores/sharedWithYou.ts`. Where the worker cannot run (plain HTTP, a private window in some browsers, a hard reload), the same calls read the object in the page, and `onProgress` reports the bytes read. `src/hooks/useDownload.ts` shows that progress in the file's row.
 
@@ -194,6 +199,8 @@ const shared = await SharedSdk.connect(indexerUrl, seed)
 const objects = await shared.objects(0, 100)
 const stream = shared.download(objects[0])
 ```
+
+`shared.objectSummaries(offset, limit)` lists the same objects without their slabs, as `id`, `size`, `metadata`, `createdAt` and `updatedAt`, which is much smaller and faster for a long list. A summary cannot be downloaded or streamed, so fetch the full object with `shared.object(id)` when the user opens one. The starter lists with `objects` because each row downloads its object directly.
 
 How the starter uses it:
 
