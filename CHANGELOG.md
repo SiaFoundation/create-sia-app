@@ -1,4 +1,11 @@
 # Changelog
+## 0.1.22 (2026-10-13)
+
+### Fixes
+
+- Bump @siafoundation/sia-storage to 0.1.4
+- The template's agent guide covers starting a video stream early with `warm()` and listing a share's files with `objectSummaries`.
+
 ## 0.1.21 (2026-10-05)
 
 ### Features
